@@ -374,16 +374,17 @@
   </div>
 </template>
 
-<script>
+<script setup>
 import { RichTextEditor } from 'christy-richtext';
-import Swal from 'sweetalert2';
 
-definePageMeta({ layout: 'admin' });
+definePageMeta({ layout: 'admin', middleware: 'backoffice-auth' });
+</script>
+
+<script>
+import Swal from 'sweetalert2';
 
 export default {
   name: 'AdminArticlesPage',
-
-  components: { RichTextEditor },
 
   /* ── 離開確認（vue-router 4 component guard） ── */
   async beforeRouteLeave() {

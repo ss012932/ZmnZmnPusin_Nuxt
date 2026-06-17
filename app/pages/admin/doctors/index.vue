@@ -30,6 +30,7 @@
       <table class="data-table">
         <thead>
           <tr>
+            <th style="width:32px"></th>
             <th style="width:56px">照片</th>
             <th>姓名</th>
             <th>科別</th>
@@ -39,10 +40,35 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="filteredDoctors.length === 0">
-            <td colspan="6" class="empty-row">目前沒有符合條件的醫師</td>
+          <tr v-if="isFetching">
+            <td colspan="7" class="empty-row">
+              <iconify-icon icon="mdi:loading" width="20" class="spin"></iconify-icon>
+              載入中...
+            </td>
           </tr>
-          <tr v-for="doc in filteredDoctors" :key="doc.id">
+          <tr v-else-if="filteredDoctors.length === 0">
+            <td colspan="7" class="empty-row">目前沒有符合條件的醫師</td>
+          </tr>
+          <tr
+            v-for="(doc, idx) in filteredDoctors"
+            :key="doc.id"
+            :data-doc-id="doc.id"
+            draggable="true"
+            :class="{
+              'tr-dragging': drag.docId === doc.id,
+              'tr-drag-over': drag.overDocId === doc.id && drag.docId !== doc.id,
+            }"
+            @dragstart="dragStart($event, doc.id)"
+            @dragover.prevent="dragOver(doc.id)"
+            @dragleave="dragLeave"
+            @drop.prevent="drop(doc)"
+            @dragend="dragEnd"
+          >
+            <td class="td-drag"
+              @touchstart="touchDragStart($event, doc.id)"
+            >
+              <iconify-icon icon="mdi:drag-vertical" width="18" class="drag-handle"></iconify-icon>
+            </td>
             <td>
               <img :src="doc.photo" :alt="doc.name" class="table-avatar" />
             </td>
@@ -149,37 +175,37 @@
                 <div class="form-group">
                   <label class="form-label">專業領域（每行一個）</label>
                   <textarea class="form-textarea" v-model="form.specialtiesRaw" rows="5"
-                    placeholder="糖尿病管理&#10;高血壓&#10;高血脂"></textarea>
+                    placeholder="犬貓心臟病&#10;腎臟疾病&#10;內分泌疾病"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">擅長診療項目（每行一個）</label>
                   <textarea class="form-textarea" v-model="form.treatmentsRaw" rows="5"
-                    placeholder="胰島素治療與血糖監測規劃&#10;心血管風險評估與預防"></textarea>
+                    placeholder="心臟超音波與心電圖檢查&#10;腹腔鏡微創手術&#10;腫瘤切除與化療評估"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">學歷（每行一個）</label>
                   <textarea class="form-textarea" v-model="form.educationRaw" rows="4"
-                    placeholder="國立台灣大學 醫學院 醫學系"></textarea>
+                    placeholder="國立中興大學 獸醫學院 獸醫學系&#10;國立台灣大學 獸醫專業學院 獸醫系"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">證照與資格（每行一個）</label>
                   <textarea class="form-textarea" v-model="form.certificationsRaw" rows="4"
-                    placeholder="中華民國內科專科醫師&#10;內分泌暨糖尿病專科醫師"></textarea>
+                    placeholder="中華民國獸醫師執照&#10;小動物內科專科認證&#10;ISVS 外科認證"></textarea>
                 </div>
 
                 <div class="form-group dg-full">
                   <label class="form-label">就職經歷（每行一個）</label>
                   <textarea class="form-textarea" v-model="form.workExperienceRaw" rows="4"
-                    placeholder="台大醫院 內科 住院醫師&#10;本院內科 主治醫師"></textarea>
+                    placeholder="台北動物醫院 住院獸醫師&#10;本院內科 主治獸醫師"></textarea>
                 </div>
 
                 <div class="form-group dg-full">
                   <label class="form-label">其他經歷（每行一個）</label>
                   <textarea class="form-textarea" v-model="form.otherExperienceRaw" rows="3"
-                    placeholder="台灣內分泌暨糖尿病學會 理事"></textarea>
+                    placeholder="台灣小動物獸醫師學會 會員&#10;亞洲獸醫心臟病學會 研究員"></textarea>
                 </div>
 
               </div>
@@ -192,9 +218,10 @@
           <button class="btn btn-ghost" @click="closeModal">
             <iconify-icon icon="mdi:close" width="16"></iconify-icon>取消
           </button>
-          <button class="btn btn-primary" @click="handleSave">
-            <iconify-icon icon="mdi:content-save-outline" width="16"></iconify-icon>
-            {{ isEditing ? '儲存變更' : '新增醫師' }}
+          <button class="btn btn-primary" @click="handleSave" :disabled="isLoading">
+            <iconify-icon v-if="isLoading" icon="mdi:loading" width="16" class="spin"></iconify-icon>
+            <iconify-icon v-else icon="mdi:content-save-outline" width="16"></iconify-icon>
+            {{ isLoading ? '處理中...' : (isEditing ? '儲存變更' : '新增醫師') }}
           </button>
         </div>
 
@@ -244,13 +271,20 @@
   </div>
 </template>
 
+<script setup>
+definePageMeta({ layout: 'admin', middleware: 'backoffice-auth' });
+</script>
+
 <script>
 import Swal from 'sweetalert2';
-
-definePageMeta({ layout: 'admin' });
+import { doctorsAPI } from '~/composables/utils/api';
 
 export default {
   name: 'AdminDoctorsPage',
+
+  beforeUnmount() {
+    this._removeTouchListeners();
+  },
 
   data() {
     return {
@@ -258,8 +292,11 @@ export default {
       filterDept: '',
       showModal: false,
       isEditing: false,
+      isLoading: false,   // 新增/編輯送出 loading
+      isFetching: false,  // 清單載入 loading
       formErrors: {},
       nextId: 5,
+      _croppedBlob: null,   // confirmCrop 後存放，供 handleSave 上傳用
       form: this.emptyForm(),
 
       /* ── 圓形裁切狀態 ── */
@@ -277,67 +314,27 @@ export default {
         dragStartImgY: 0,
       },
 
+      /* ── 拖曳排序狀態 ── */
+      drag: {
+        docId: null,      // 正在被拖曳的 doc.id
+        overDocId: null,  // 目前懸停的目標 doc.id
+      },
+
       departments: [
-        { key: 'internal',   label: '一般內科' },
-        { key: 'surgery',    label: '外科手術' },
-        { key: 'cardiology', label: '心臟科' },
-        { key: 'pediatrics', label: '兒科' },
+        { key: 'internal',      label: '犬貓內科' },
+        { key: 'surgery',       label: '外科手術' },
+        { key: 'cardiology',    label: '心臟科' },
+        { key: 'dentistry',     label: '齒科' },
+        { key: 'ophthalmology', label: '眼科' },
+        { key: 'orthopedics',   label: '骨科' },
+        { key: 'neurology',     label: '神經內科' },
+        { key: 'obstetrics',    label: '產科' },
+        { key: 'oncology',      label: '腫瘤科' },
+        { key: 'laser',         label: '雷射治療' },
+        { key: 'regenerative',  label: '再生醫療' },
       ],
 
-      doctors: [
-        {
-          id: 1,
-          name: '陳建志',
-          photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-          titleTags: ['院長', '門診醫療部主任'],
-          department: '一般內科', deptKey: 'internal',
-          specialties: ['糖尿病管理', '高血壓', '高血脂', '甲狀腺疾病', '肥胖症'],
-          treatments: ['胰島素治療與血糖監測規劃', '心血管風險評估與預防', '荷爾蒙失調與甲狀腺疾病', '慢性病整合管理'],
-          education: ['國立台灣大學 醫學院 醫學系'],
-          workExperience: ['台大醫院 內科 住院醫師', '台大醫院 內分泌科 研究員', '本院內科 主治醫師', '本院 內科部主任（現任）'],
-          otherExperience: ['台灣內分泌暨糖尿病學會 理事', '衛生福利部 糖尿病照護品質評估委員'],
-          certifications: ['中華民國內科專科醫師', '內分泌暨糖尿病專科醫師', '美國內分泌學會會員（AACE）'],
-        },
-        {
-          id: 2,
-          name: '林淑芬',
-          photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-          titleTags: ['副院長', '住院照護部主任'],
-          department: '心臟科', deptKey: 'cardiology',
-          specialties: ['心律不整', '心臟衰竭', '冠狀動脈疾病', '心臟超音波', '導管消融術'],
-          treatments: ['心律不整診斷與導管消融術', '心臟衰竭藥物治療與追蹤', '冠狀動脈疾病評估與處置', '心臟超音波判讀'],
-          education: ['陽明交通大學 醫學院 醫學系'],
-          workExperience: ['台北榮民總醫院 內科 住院醫師', '台北榮民總醫院 心臟科 研究員', '本院心臟科 主治醫師'],
-          otherExperience: ['台灣心律不整學會 會員', '歐洲心臟學會 會員（FESC）'],
-          certifications: ['中華民國心臟內科專科醫師', '心律不整電氣生理學認證'],
-        },
-        {
-          id: 3,
-          name: '張偉明',
-          photo: 'https://randomuser.me/api/portraits/men/67.jpg',
-          titleTags: ['外科部副主任', '主治醫師'],
-          department: '外科手術', deptKey: 'surgery',
-          specialties: ['腹腔鏡手術', '疝氣修補', '大腸直腸外科', '機器人輔助手術'],
-          treatments: ['腹腔鏡膽囊切除術', '疝氣修補手術', '大腸直腸腫瘤切除', '機器人輔助微創手術'],
-          education: ['國立成功大學 醫學院 醫學系'],
-          workExperience: ['成大醫院 外科 住院醫師及總醫師', 'Johns Hopkins Hospital 研修（美國）', '本院外科 主治醫師'],
-          otherExperience: ['SAGES 腹腔鏡外科學會 會員', '達文西機器手臂術式認證醫師'],
-          certifications: ['中華民國外科專科醫師', '腹腔鏡手術技術認證（SAGES）'],
-        },
-        {
-          id: 4,
-          name: '吳雅婷',
-          photo: 'https://randomuser.me/api/portraits/women/28.jpg',
-          titleTags: ['主治醫師'],
-          department: '兒科', deptKey: 'pediatrics',
-          specialties: ['新生兒照護', '兒童氣喘', '過敏疾病', '兒童發展評估'],
-          treatments: ['新生兒照護與早產兒評估', '兒童氣喘與過敏疾病治療', '兒童生長發展評估', '疫苗接種計畫與衛教'],
-          education: ['台北醫學大學 醫學系'],
-          workExperience: ['馬偕紀念醫院 小兒科 住院醫師', '馬偕紀念醫院 新生兒科 研究員', '本院兒科 主治醫師（現任）'],
-          otherExperience: ['兒童發展聯合評估中心 認定醫師', '台灣兒科醫學會 會員'],
-          certifications: ['中華民國兒科專科醫師', '新生兒急救（NRP）認證'],
-        },
-      ],
+      doctors: [],
     };
   },
 
@@ -351,7 +348,24 @@ export default {
     },
   },
 
+  async mounted() {
+    await this.fetchDoctors();
+  },
+
   methods: {
+    /* ── 資料載入 ── */
+    async fetchDoctors() {
+      this.isFetching = true;
+      try {
+        const res = await doctorsAPI.getAll();
+        this.doctors = (res.data || []).map(this.mapApiDoctor);
+      } catch (err) {
+        Swal.fire({ icon: 'error', title: '載入失敗', text: '無法取得醫師清單，請重新整理' });
+      } finally {
+        this.isFetching = false;
+      }
+    },
+
     /* ── 表單 ── */
     emptyForm() {
       return {
@@ -374,12 +388,14 @@ export default {
       this.isEditing = false;
       this.form = this.emptyForm();
       this.formErrors = {};
+      this._croppedBlob = null;
       this.showModal = true;
     },
 
     openEdit(doc) {
       this.isEditing = true;
       this._editingId = doc.id;
+      this._croppedBlob = null;   // 重置，確保不帶上次裁切的殘留
       this.form = {
         name: doc.name,
         photo: doc.photo,
@@ -405,41 +421,213 @@ export default {
       return Object.keys(this.formErrors).length === 0;
     },
 
-    handleSave() {
+    async handleSave() {
       if (!this.validate()) return;
-      const payload = {
-        name:           this.form.name.trim(),
-        photo:          this.form.photo || 'https://randomuser.me/api/portraits/lego/1.jpg',
-        deptKey:        this.form.deptKey,
-        department:     this.deptLabel(this.form.deptKey),
-        titleTags:      this.parseLines(this.form.titleTagsRaw),
-        specialties:    this.parseLines(this.form.specialtiesRaw),
-        treatments:     this.parseLines(this.form.treatmentsRaw),
-        education:      this.parseLines(this.form.educationRaw),
-        workExperience: this.parseLines(this.form.workExperienceRaw),
-        otherExperience:this.parseLines(this.form.otherExperienceRaw),
-        certifications: this.parseLines(this.form.certificationsRaw),
-      };
+
+      // ── 編輯：呼叫 PUT API ──
       if (this.isEditing) {
-        const idx = this.doctors.findIndex((d) => d.id === this._editingId);
-        if (idx !== -1) this.doctors.splice(idx, 1, { id: this._editingId, ...payload });
-      } else {
-        this.doctors.push({ id: this.nextId++, ...payload });
+        this.isLoading = true;
+        try {
+          const fd = new FormData();
+          fd.append('name',           this.form.name.trim());
+          fd.append('department',     this.deptLabel(this.form.deptKey));
+          if (this.form.titleTagsRaw.trim())       fd.append('titles',          this.form.titleTagsRaw.trim());
+          if (this.form.specialtiesRaw.trim())     fd.append('specialties',     this.form.specialtiesRaw.trim());
+          if (this.form.treatmentsRaw.trim())      fd.append('treatmentItems',  this.form.treatmentsRaw.trim());
+          if (this.form.educationRaw.trim())       fd.append('education',       this.form.educationRaw.trim());
+          if (this.form.certificationsRaw.trim())  fd.append('licenses',        this.form.certificationsRaw.trim());
+          if (this.form.workExperienceRaw.trim())  fd.append('experience',      this.form.workExperienceRaw.trim());
+          if (this.form.otherExperienceRaw.trim()) fd.append('otherExperience', this.form.otherExperienceRaw.trim());
+          // 有重新裁切才送新照片，否則後端保留舊照片
+          if (this._croppedBlob) {
+            fd.append('photo', this._croppedBlob, 'photo.png');
+          }
+
+          const res = await doctorsAPI.update(this._editingId, fd);
+          const doc = this.mapApiDoctor(res.data);
+          const idx = this.doctors.findIndex((d) => d.id === this._editingId);
+          if (idx !== -1) this.doctors.splice(idx, 1, doc);
+          this.closeModal();
+          Swal.fire({ icon: 'success', title: '儲存成功', showConfirmButton: false, timer: 1400, timerProgressBar: true });
+        } catch (err) {
+          const msg = err?.response?.data?.message || '儲存失敗，請稍後再試';
+          Swal.fire({ icon: 'error', title: '儲存失敗', text: msg });
+        } finally {
+          this.isLoading = false;
+        }
+        return;
       }
-      this.closeModal();
-      Swal.fire({
-        icon: 'success',
-        title: this.isEditing ? '儲存成功' : '新增成功',
-        showConfirmButton: false,
-        timer: 1400,
-        timerProgressBar: true,
+
+      // ── 新增：呼叫後端 API ──
+      this.isLoading = true;
+      try {
+        const fd = new FormData();
+        fd.append('name',           this.form.name.trim());
+        fd.append('department',     this.deptLabel(this.form.deptKey));
+        if (this.form.titleTagsRaw.trim())       fd.append('titles',          this.form.titleTagsRaw.trim());
+        if (this.form.specialtiesRaw.trim())     fd.append('specialties',     this.form.specialtiesRaw.trim());
+        if (this.form.treatmentsRaw.trim())      fd.append('treatmentItems',  this.form.treatmentsRaw.trim());
+        if (this.form.educationRaw.trim())       fd.append('education',       this.form.educationRaw.trim());
+        if (this.form.certificationsRaw.trim())  fd.append('licenses',        this.form.certificationsRaw.trim());
+        if (this.form.workExperienceRaw.trim())  fd.append('experience',      this.form.workExperienceRaw.trim());
+        if (this.form.otherExperienceRaw.trim()) fd.append('otherExperience', this.form.otherExperienceRaw.trim());
+        // createdBy 由後端從 JWT 自動帶入，前端不傳
+        if (this._croppedBlob) {
+          fd.append('photo', this._croppedBlob, 'photo.png');
+        }
+
+        const res = await doctorsAPI.create(fd);
+        const doc = this.mapApiDoctor(res.data);
+        this.doctors.push(doc);
+        this.closeModal();
+        Swal.fire({ icon: 'success', title: '新增成功', showConfirmButton: false, timer: 1400, timerProgressBar: true });
+      } catch (err) {
+        const msg = err?.response?.data?.message || '新增失敗，請稍後再試';
+        Swal.fire({ icon: 'error', title: '新增失敗', text: msg });
+      } finally {
+        this.isLoading = false;
+      }
+    },
+
+    /* ── API 回傳資料 → 前端 doctors 格式 ── */
+    mapApiDoctor(d) {
+      const splitLines = (str) => str ? str.split('\n').map((s) => s.trim()).filter(Boolean) : [];
+      const deptKey = this.departments.find((dep) => dep.label === d.department)?.key || '';
+      return {
+        id:              d.id,
+        name:            d.name,
+        photo:           d.photoUrl || 'https://randomuser.me/api/portraits/lego/1.jpg',
+        department:      d.department,
+        deptKey,
+        sortOrder:       d.sortOrder ?? 0,
+        titleTags:       splitLines(d.titles),
+        specialties:     splitLines(d.specialties),
+        treatments:      splitLines(d.treatmentItems),
+        education:       splitLines(d.education),
+        workExperience:  splitLines(d.experience),
+        otherExperience: splitLines(d.otherExperience),
+        certifications:  splitLines(d.licenses),
+      };
+    },
+
+    /* ── 拖曳排序 ── */
+    dragStart(e, docId) {
+      this.drag.docId = docId;
+      e.dataTransfer.effectAllowed = 'move';
+    },
+    dragOver(docId) {
+      this.drag.overDocId = docId;
+    },
+    dragLeave() {
+      this.drag.overDocId = null;
+    },
+    dragEnd() {
+      this.drag.docId     = null;
+      this.drag.overDocId = null;
+    },
+
+    /* ── 手機觸控拖曳 ── */
+    touchDragStart(e, docId) {
+      e.preventDefault(); // 阻止 td 上的 click / scroll 干擾
+      this.drag.docId = docId;
+      // 掛 non-passive touchmove 到 document，才能 preventDefault() 阻止捲動
+      this._touchMoveHandler = (ev) => this._onTouchMove(ev);
+      this._touchEndHandler  = (ev) => this.touchDragEnd(ev);
+      document.addEventListener('touchmove', this._touchMoveHandler, { passive: false });
+      document.addEventListener('touchend',  this._touchEndHandler,  { once: true });
+    },
+
+    _onTouchMove(e) {
+      if (!this.drag.docId) return;
+      e.preventDefault(); // 阻止頁面捲動
+      const touch = e.touches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const tr = el?.closest('[data-doc-id]');
+      if (tr) {
+        const targetId = parseInt(tr.dataset.docId);
+        if (targetId && targetId !== this.drag.docId) {
+          this.drag.overDocId = targetId;
+        }
+      } else {
+        this.drag.overDocId = null;
+      }
+    },
+
+    touchDragEnd(e) {
+      this._removeTouchListeners();
+
+      // changedTouches 取最終落點，補救 touchmove 沒更新到的情況
+      const touch = e?.changedTouches?.[0];
+      if (touch) {
+        const el = document.elementFromPoint(touch.clientX, touch.clientY);
+        const tr = el?.closest('[data-doc-id]');
+        if (tr) {
+          const targetId = parseInt(tr.dataset.docId);
+          if (targetId && targetId !== this.drag.docId) {
+            this.drag.overDocId = targetId;
+          }
+        }
+      }
+
+      const toDoc = this.drag.overDocId
+        ? this.doctors.find((d) => d.id === this.drag.overDocId)
+        : null;
+      if (toDoc) {
+        this.drop(toDoc);
+      } else {
+        this.dragEnd();
+      }
+    },
+
+    _removeTouchListeners() {
+      if (this._touchMoveHandler) {
+        document.removeEventListener('touchmove', this._touchMoveHandler);
+        this._touchMoveHandler = null;
+      }
+      if (this._touchEndHandler) {
+        document.removeEventListener('touchend', this._touchEndHandler);
+        this._touchEndHandler = null;
+      }
+    },
+
+    async drop(toDoc) {
+      const fromId = this.drag.docId;
+      this.drag.docId    = null;
+      this.drag.overDocId = null;
+
+      if (!fromId || fromId === toDoc.id) return;
+
+      // 找到 doctors 陣列中的實際位置
+      const fromIdx = this.doctors.findIndex((d) => d.id === fromId);
+      const toIdx   = this.doctors.findIndex((d) => d.id === toDoc.id);
+      if (fromIdx === -1 || toIdx === -1) return;
+
+      // 重新排列 doctors 陣列
+      const moved = this.doctors.splice(fromIdx, 1)[0];
+      this.doctors.splice(toIdx, 0, moved);
+
+      // 依新位置重新指派 sortOrder（從 1 開始）
+      const items = this.doctors.map((d, i) => {
+        d.sortOrder = i + 1;
+        return { id: d.id, sortOrder: i + 1 };
       });
+
+      // 呼叫後端儲存排序
+      try {
+        await doctorsAPI.updateSortOrders(items);
+        Swal.fire({ icon: 'success', title: '排序已儲存', showConfirmButton: false, timer: 1200, timerProgressBar: true });
+      } catch (err) {
+        const msg = err?.response?.data?.message || '排序儲存失敗，請重新整理';
+        Swal.fire({ icon: 'error', title: '排序儲存失敗', text: msg });
+        // 回滾：重新抓取正確資料
+        await this.fetchDoctors();
+      }
     },
 
     async confirmDelete(doc) {
-      const result = await Swal.fire({
+      const confirm = await Swal.fire({
         title: '確認刪除',
-        html: `確定要刪除醫師 <strong>${doc.name}</strong> 嗎？<br>此操作無法復原。`,
+        html: `確定要刪除醫師 <strong>${doc.name}</strong> 嗎？<br>此操作無法復原，照片也會一併刪除。`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#e53e3e',
@@ -447,9 +635,16 @@ export default {
         confirmButtonText: '確認刪除',
         cancelButtonText: '取消',
       });
-      if (result.isConfirmed) {
+
+      if (!confirm.isConfirmed) return;
+
+      try {
+        await doctorsAPI.remove(doc.id);
         this.doctors = this.doctors.filter((d) => d.id !== doc.id);
         Swal.fire({ icon: 'success', title: '已刪除', showConfirmButton: false, timer: 1200 });
+      } catch (err) {
+        const msg = err?.response?.data?.message || '刪除失敗，請稍後再試';
+        Swal.fire({ icon: 'error', title: '刪除失敗', text: msg });
       }
     },
 
@@ -507,7 +702,7 @@ export default {
       ctx.stroke();
     },
 
-    /* ── 確認裁切 → 輸出 base64 ── */
+    /* ── 確認裁切 → base64 預覽 + Blob 供上傳 ── */
     confirmCrop() {
       const out = 260;
       const cs  = this.crop.canvasSize;
@@ -524,8 +719,14 @@ export default {
       const { img, x, y, scale } = this.crop;
       ctx.drawImage(img, x * ratio, y * ratio, img.width * scale * ratio, img.height * scale * ratio);
 
-      this.form.photo  = canvas.toDataURL('image/png');
-      this.crop.show   = false;
+      // base64 用於圓形預覽
+      this.form.photo = canvas.toDataURL('image/png');
+      this.crop.show  = false;
+
+      // Blob 用於 FormData 上傳
+      canvas.toBlob((blob) => {
+        this._croppedBlob = blob;
+      }, 'image/png');
     },
 
     /* ── 拖曳（Mouse） ── */
@@ -808,6 +1009,18 @@ export default {
 .crop-canvas-wrap { border-radius: 12px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,.18); }
 .crop-canvas { display: block; cursor: grab; }
 .crop-canvas:active { cursor: grabbing; }
+
+/* ── 拖曳排序 ── */
+.td-drag { width: 32px; text-align: center; cursor: grab; touch-action: none; user-select: none; }
+.drag-handle { color: #ccc; display: block; transition: color 0.15s; }
+tr:hover .drag-handle { color: #aaa; }
+.tr-dragging { opacity: 0.4; }
+.tr-drag-over td { background: #eef3fa !important; box-shadow: inset 0 -2px 0 #2c5282; }
+
+/* ── Loading spin ── */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spin { animation: spin 0.8s linear infinite; }
+.btn:disabled { opacity: 0.65; cursor: not-allowed; }
 
 /* ── RWD ── */
 @media (max-width: 1100px) {

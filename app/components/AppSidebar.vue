@@ -35,7 +35,7 @@
           </NuxtLink>
         </li>
 
-        <li class="nav-item">
+        <li class="nav-item" v-if="user?.isAdmin">
           <NuxtLink to="/admin/permissions" class="nav-link" active-class="active">
             <iconify-icon icon="mdi:shield-account-outline" width="20" class="nav-icon"></iconify-icon>
             <span class="nav-label" v-show="!collapsed">權限管理</span>
@@ -71,6 +71,10 @@ export default {
     mobileOpen: {
       type: Boolean,
       default: false,
+    },
+    user: {
+      type: Object,
+      default: null,
     },
   },
 

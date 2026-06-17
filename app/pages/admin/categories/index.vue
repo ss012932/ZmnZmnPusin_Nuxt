@@ -133,10 +133,12 @@
   </div>
 </template>
 
+<script setup>
+definePageMeta({ layout: 'admin', middleware: 'backoffice-auth' });
+</script>
+
 <script>
 import Swal from 'sweetalert2';
-
-definePageMeta({ layout: 'admin' });
 
 export default {
   name: 'AdminCategoriesPage',
