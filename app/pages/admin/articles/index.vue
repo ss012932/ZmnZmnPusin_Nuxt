@@ -278,7 +278,7 @@
                 <span class="form-input form-input-sm" style="background:#f3f4f6;color:#6b7280;display:block;padding:6px 10px;border-radius:4px;font-size:13px;">
                   {{ form.code || '（新增後由系統自動產生）' }}
                 </span>
-                <span class="seo-slug-hint">由後端自動產生，不可修改</span>
+                <span class="seo-slug-hint">由系統自動產生，不可修改</span>
               </div>
             </div>
           </div>
