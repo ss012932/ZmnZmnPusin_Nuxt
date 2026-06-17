@@ -216,6 +216,7 @@ definePageMeta({
   middleware: ['backoffice-auth', 'auth'],
   requiresAdmin: true,
 });
+useHead({ title: '權限管理' });
 </script>
 
 <script>

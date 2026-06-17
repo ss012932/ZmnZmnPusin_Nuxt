@@ -103,6 +103,7 @@
 
 <script setup>
 definePageMeta({ layout: false });
+useHead({ title: '重設密碼 | 人人動物醫院後台' });
 </script>
 
 <script>

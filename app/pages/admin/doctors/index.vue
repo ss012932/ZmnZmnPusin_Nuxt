@@ -273,6 +273,7 @@
 
 <script setup>
 definePageMeta({ layout: 'admin', middleware: 'backoffice-auth' });
+useHead({ title: '醫師管理' });
 </script>
 
 <script>
@@ -615,6 +616,7 @@ export default {
       // 呼叫後端儲存排序
       try {
         await doctorsAPI.updateSortOrders(items);
+        await this.fetchDoctors();
         Swal.fire({ icon: 'success', title: '排序已儲存', showConfirmButton: false, timer: 1200, timerProgressBar: true });
       } catch (err) {
         const msg = err?.response?.data?.message || '排序儲存失敗，請重新整理';
