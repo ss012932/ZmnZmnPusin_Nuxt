@@ -45,6 +45,7 @@
               <th>標題</th>
               <th>母類別</th>
               <th>子類別</th>
+              <th>段落數</th>
               <th>狀態</th>
               <th>更新時間</th>
               <th style="width:190px">操作</th>
@@ -52,7 +53,7 @@
           </thead>
           <tbody>
             <tr v-if="filteredArticles.length === 0">
-              <td colspan="6" class="empty-row">目前沒有符合條件的文章</td>
+              <td colspan="7" class="empty-row">目前沒有符合條件的文章</td>
             </tr>
             <tr v-for="art in filteredArticles" :key="art.id">
               <td class="td-title">{{ art.title }}</td>
@@ -66,6 +67,9 @@
                 <span v-else class="no-sub">—</span>
               </td>
               <td>
+                <span class="section-count-badge">{{ art.sections.length }} 段</span>
+              </td>
+              <td>
                 <span class="status-badge" :class="art.status">
                   {{ art.status === 'published' ? '已發布' : '草稿' }}
                 </span>
@@ -73,7 +77,7 @@
               <td class="td-date">{{ art.updatedAt }}</td>
               <td>
                 <div class="action-btns">
-                  <button class="btn-action btn-preview" @click="openPreview(art)" title="預覽">
+                  <button class="btn-action btn-preview" @click="openListPreview(art)" title="預覽">
                     <iconify-icon icon="mdi:eye-outline" width="14"></iconify-icon>
                     預覽
                   </button>
@@ -93,16 +97,144 @@
       </div>
     </template>
 
-    <!-- ══ 新增 / 編輯文章畫面 ══ -->
-    <template v-if="view === 'editor'">
+    <!-- ══ Step 1：基本設定 ══ -->
+    <template v-if="view === 'step1'">
       <div class="page-header">
         <div>
           <h2 class="page-title">{{ isEditing ? '編輯文章' : '新增文章' }}</h2>
+          <p class="page-desc">第 1 步：設定基本資訊與目錄段落</p>
         </div>
         <div class="header-actions">
-          <button class="btn btn-ghost" @click="view = 'list'">
+          <button class="btn btn-ghost" @click="tryGoToList">
             <iconify-icon icon="mdi:close" width="16"></iconify-icon>
             取消
+          </button>
+        </div>
+      </div>
+
+      <div class="step-card">
+        <!-- 步驟指示器 -->
+        <div class="step-indicator">
+          <div class="step-item active">
+            <span class="step-num">1</span>
+            <span class="step-label">基本設定</span>
+          </div>
+          <div class="step-divider"></div>
+          <div class="step-item">
+            <span class="step-num">2</span>
+            <span class="step-label">內容編輯</span>
+          </div>
+        </div>
+
+        <!-- 文章標題 -->
+        <div class="form-group">
+          <label class="form-label">文章標題 <span class="required">*</span></label>
+          <input
+            class="form-input form-input-lg"
+            type="text"
+            v-model="form.title"
+            placeholder="輸入文章標題"
+          />
+          <span class="form-error" v-if="formErrors.title">{{ formErrors.title }}</span>
+        </div>
+
+        <!-- 類別 -->
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">母類別 <span class="required">*</span></label>
+            <select class="form-input" v-model="form.categoryId" @change="form.subCategoryId = ''">
+              <option value="">請選擇母類別</option>
+              <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
+            </select>
+            <span class="form-error" v-if="formErrors.categoryId">{{ formErrors.categoryId }}</span>
+          </div>
+          <div class="form-group" v-if="currentSubCategories.length > 0">
+            <label class="form-label">子類別</label>
+            <select class="form-input" v-model="form.subCategoryId">
+              <option value="">無（不指定子類別）</option>
+              <option v-for="sub in currentSubCategories" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- 目錄段落 -->
+        <div class="form-group">
+          <div class="sections-header">
+            <label class="form-label" style="margin-bottom:0">
+              目錄段落 <span class="required">*</span>
+            </label>
+            <button class="btn btn-outline btn-sm" @click="addSection">
+              <iconify-icon icon="mdi:plus" width="15"></iconify-icon>
+              新增段落
+            </button>
+          </div>
+          <span class="form-error" v-if="formErrors.sections">{{ formErrors.sections }}</span>
+
+          <div class="sections-list">
+            <div v-if="form.sections.length === 0" class="sections-empty">
+              <iconify-icon icon="mdi:playlist-plus" width="32"></iconify-icon>
+              <p>尚未新增任何目錄段落，請點選「新增段落」</p>
+            </div>
+
+            <div
+              v-for="(sec, idx) in form.sections"
+              :key="sec.id"
+              class="section-row"
+              :class="{ 'drag-over': dragOverIndex === idx, 'dragging': dragIndex === idx }"
+              @dragover.prevent="onDragOver(idx)"
+              @drop.prevent="onDrop(idx)"
+              @dragend="onDragEnd"
+            >
+              <div
+                class="section-drag-handle"
+                title="拖曳排序"
+                draggable="true"
+                @dragstart="onDragStart(idx, $event)"
+              >
+                <iconify-icon icon="mdi:drag-vertical" width="20"></iconify-icon>
+              </div>
+              <span class="section-order-num">{{ idx + 1 }}</span>
+              <input
+                class="form-input section-title-input"
+                type="text"
+                v-model="sec.title"
+                placeholder="輸入段落標題"
+              />
+              <button class="icon-btn danger" @click="removeSection(idx)" title="移除段落">
+                <iconify-icon icon="mdi:trash-can-outline" width="16"></iconify-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-footer">
+          <button class="btn btn-primary" @click="goToStep2">
+            下一步：編輯內容
+            <iconify-icon icon="mdi:arrow-right" width="16"></iconify-icon>
+          </button>
+        </div>
+      </div>
+    </template>
+
+    <!-- ══ Step 2：內容編輯 ══ -->
+    <template v-if="view === 'step2'">
+      <div class="page-header">
+        <div>
+          <h2 class="page-title">{{ form.title || '（無標題）' }}</h2>
+          <p class="page-desc">第 2 步：編輯各段落內容</p>
+        </div>
+        <div class="header-actions">
+          <button class="btn btn-ghost" @click="view = 'step1'">
+            <iconify-icon icon="mdi:arrow-left" width="16"></iconify-icon>
+            上一步
+          </button>
+          <button class="btn btn-ghost" @click="tryGoToList">
+            <iconify-icon icon="mdi:close" width="16"></iconify-icon>
+            取消
+          </button>
+          <button class="btn btn-outline" @click="openPreviewAll">
+            <iconify-icon icon="mdi:eye-outline" width="16"></iconify-icon>
+            預覽
           </button>
           <button class="btn btn-outline" @click="handleSave('draft')">
             <iconify-icon icon="mdi:content-save-outline" width="16"></iconify-icon>
@@ -115,79 +247,49 @@
         </div>
       </div>
 
-      <div class="editor-layout">
-        <!-- 左欄：文章內容 -->
-        <div class="editor-main">
-          <div class="editor-card">
-            <div class="form-group">
-              <label class="form-label">文章標題 <span class="required">*</span></label>
-              <input class="form-input form-input-lg" type="text" v-model="form.title" placeholder="輸入文章標題" />
-              <span class="form-error" v-if="formErrors.title">{{ formErrors.title }}</span>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">文章內容 <span class="required">*</span></label>
-              <div class="richtext-wrap">
-                <client-only>
-                  <ChristyRichtext v-model="form.content" :placeholder="'請輸入文章內容...'" />
-                </client-only>
-              </div>
-              <span class="form-error" v-if="formErrors.content">{{ formErrors.content }}</span>
-            </div>
+      <div class="editor2-layout">
+        <!-- 左側：段落導航 -->
+        <div class="section-nav-panel">
+          <div class="section-nav-header">
+            <iconify-icon icon="mdi:format-list-bulleted" width="15"></iconify-icon>
+            目錄段落
+          </div>
+          <div
+            v-for="(sec, idx) in form.sections"
+            :key="sec.id"
+            class="section-nav-item"
+            :class="{ active: currentSectionIndex === idx }"
+            @click="currentSectionIndex = idx"
+          >
+            <span class="section-nav-num">{{ idx + 1 }}</span>
+            <span class="section-nav-title">{{ sec.title || '（未命名段落）' }}</span>
           </div>
         </div>
 
-        <!-- 右欄：設定 -->
-        <div class="editor-side">
-          <div class="editor-card">
-            <h4 class="side-section-title">
-              <iconify-icon icon="mdi:tag-outline" width="16"></iconify-icon>
-              分類設定
-            </h4>
-
-            <div class="form-group">
-              <label class="form-label">母類別 <span class="required">*</span></label>
-              <select class="form-input" v-model="form.categoryId" @change="form.subCategoryId = ''">
-                <option value="">請選擇母類別</option>
-                <option v-for="cat in categories" :key="cat.id" :value="cat.id">{{ cat.name }}</option>
-              </select>
-              <span class="form-error" v-if="formErrors.categoryId">{{ formErrors.categoryId }}</span>
+        <!-- 右側：富文本編輯 -->
+        <div class="section-editor-main">
+          <template v-if="currentSection">
+            <div class="section-editor-header">
+              <h3 class="section-editor-title">
+                <span class="section-editor-num">{{ currentSectionIndex + 1 }}</span>
+                {{ currentSection.title || '（未命名段落）' }}
+              </h3>
+              <span class="autosave-hint" v-if="lastSavedAt">
+                <iconify-icon icon="mdi:cloud-check-outline" width="14"></iconify-icon>
+                已自動暫存 {{ lastSavedAt }}
+              </span>
             </div>
 
-            <div class="form-group" v-if="currentSubCategories.length > 0">
-              <label class="form-label">子類別</label>
-              <select class="form-input" v-model="form.subCategoryId">
-                <option value="">無（不指定子類別）</option>
-                <option v-for="sub in currentSubCategories" :key="sub.id" :value="sub.id">{{ sub.name }}</option>
-              </select>
-            </div>
+              <ClientOnly>
+                <RichTextEditor v-model="currentSection.content" />
+              </ClientOnly>
 
-            <NuxtLink to="/admin/categories" class="cat-manage-link">
-              <iconify-icon icon="mdi:cog-outline" width="14"></iconify-icon>
-              管理類別設定
-            </NuxtLink>
-          </div>
-
-          <div class="editor-card">
-            <h4 class="side-section-title">
-              <iconify-icon icon="mdi:eye-outline" width="16"></iconify-icon>
-              預覽
-            </h4>
-            <button
-              class="btn btn-outline preview-btn"
-              :disabled="!form.content"
-              @click="previewForm"
-            >
-              <iconify-icon icon="mdi:eye-outline" width="16"></iconify-icon>
-              預覽文章排版
-            </button>
-            <p class="preview-hint">預覽排版與前台相同</p>
-          </div>
+          </template>
         </div>
       </div>
     </template>
 
-    <!-- ══ 預覽 Modal ══ -->
+    <!-- ══ 預覽 Modal（編輯中） ══ -->
     <div class="modal-backdrop" v-if="showPreview" @click.self="showPreview = false">
       <div class="modal modal-preview">
         <div class="modal-header">
@@ -200,14 +302,24 @@
           </button>
         </div>
         <div class="modal-body preview-body">
-          <!-- 前台風格 -->
           <div class="protection-page-preview">
             <div class="unified-container-preview">
               <div class="content-header-preview">
-                <h2 class="content-title-preview">{{ previewData.title }}</h2>
+                <h2 class="content-title-preview">{{ form.title || '（無標題）' }}</h2>
               </div>
-              <div class="section-content-preview">
-                <article class="rich-text-content-preview" v-html="previewData.content"></article>
+              <div v-if="form.subCategoryId" class="preview-subcategory">
+                {{ getSubCategoryName(form.categoryId, Number(form.subCategoryId)) }}
+              </div>
+              <div
+                v-for="(sec, idx) in form.sections"
+                :key="sec.id"
+                class="preview-section-block"
+              >
+                <h3 class="preview-section-title">{{ sec.title || `段落 ${idx + 1}` }}</h3>
+                <article
+                  class="rich-text-content-preview"
+                  v-html="sec.content || '<p><em>（此段落尚無內容）</em></p>'"
+                ></article>
               </div>
             </div>
           </div>
@@ -218,13 +330,52 @@
       </div>
     </div>
 
+    <!-- ══ 列表預覽 Modal ══ -->
+    <div class="modal-backdrop" v-if="showListPreview" @click.self="showListPreview = false">
+      <div class="modal modal-preview">
+        <div class="modal-header">
+          <h3 class="modal-title">
+            <iconify-icon icon="mdi:eye-outline" width="18"></iconify-icon>
+            文章預覽
+          </h3>
+          <button class="modal-close" @click="showListPreview = false">
+            <iconify-icon icon="mdi:close" width="20"></iconify-icon>
+          </button>
+        </div>
+        <div class="modal-body preview-body">
+          <div class="protection-page-preview" v-if="previewArt">
+            <div class="unified-container-preview">
+              <div class="content-header-preview">
+                <h2 class="content-title-preview">{{ previewArt.title }}</h2>
+              </div>
+              <div v-if="previewArt.subCategoryId" class="preview-subcategory">
+                {{ getSubCategoryName(previewArt.categoryId, previewArt.subCategoryId) }}
+              </div>
+              <div
+                v-for="(sec, idx) in previewArt.sections"
+                :key="idx"
+                class="preview-section-block"
+              >
+                <h3 class="preview-section-title">{{ sec.title || `段落 ${idx + 1}` }}</h3>
+                <article
+                  class="rich-text-content-preview"
+                  v-html="sec.content || '<p><em>（此段落尚無內容）</em></p>'"
+                ></article>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-ghost" @click="showListPreview = false">關閉</button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
 
 <script>
-import { ChristyRichtext } from 'christy-richtext';
-import 'christy-richtext/dist-lib/christy-richtext.css';
+import { RichTextEditor } from 'christy-richtext';
 import Swal from 'sweetalert2';
 
 definePageMeta({ layout: 'admin' });
@@ -232,18 +383,47 @@ definePageMeta({ layout: 'admin' });
 export default {
   name: 'AdminArticlesPage',
 
-  components: { ChristyRichtext },
+  components: { RichTextEditor },
+
+  /* ── 離開確認（vue-router 4 component guard） ── */
+  async beforeRouteLeave() {
+    if (this.isDirty) {
+      const result = await Swal.fire({
+        title: '編輯尚未完成',
+        text: '確認要離開此頁面嗎？未儲存的內容將會遺失。',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e53e3e',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '確認離開',
+        cancelButtonText: '繼續編輯',
+      });
+      return result.isConfirmed;
+    }
+    return true;
+  },
 
   data() {
     return {
-      view: 'list',
+      view: 'list',           // 'list' | 'step1' | 'step2'
+      isEditing: false,
+      _editingId: null,
+
       searchKeyword: '',
       filterCat: '',
       filterStatus: '',
+
       showPreview: false,
-      isEditing: false,
-      previewData: { title: '', content: '' },
-      nextArticleId: 4,
+      showListPreview: false,
+      previewArt: null,
+
+      currentSectionIndex: 0,
+      lastSavedAt: '',
+
+      /* 拖曳排序 */
+      dragIndex: null,
+      dragOverIndex: null,
+
       formErrors: {},
 
       form: this.emptyForm(),
@@ -283,7 +463,18 @@ export default {
           subCategoryId: 11,
           status: 'published',
           updatedAt: '2025-06-10',
-          content: '<p>關節退化是許多中高齡動物常見的問題。年齡增長、肥胖及過度使用，都可能加速軟骨磨損。</p><p><strong>高風險族群</strong>包括肥胖犬貓、曾有關節脫臼或韌帶損傷的動物，以及活動力旺盛、長期劇烈運動的寵物。</p>',
+          sections: [
+            {
+              id: 101,
+              title: '退化成因',
+              content: '<p>關節退化是許多中高齡動物常見的問題。年齡增長、肥胖及過度使用，都可能加速軟骨磨損。</p>',
+            },
+            {
+              id: 102,
+              title: '高風險族群',
+              content: '<p><strong>高風險族群</strong>包括肥胖犬貓、曾有關節脫臼或韌帶損傷的動物，以及活動力旺盛、長期劇烈運動的寵物。</p>',
+            },
+          ],
         },
         {
           id: 2,
@@ -292,7 +483,18 @@ export default {
           subCategoryId: 21,
           status: 'published',
           updatedAt: '2025-06-08',
-          content: '<p>子宮蓄膿是未絕育母犬、母貓常見的生殖系統疾病，好發於發情期後。</p><p>最有效的預防方式是<strong>絕育手術</strong>，可大幅降低感染風險與高額的緊急手術費用。</p>',
+          sections: [
+            {
+              id: 201,
+              title: '疾病認識',
+              content: '<p>子宮蓄膿是未絕育母犬、母貓常見的生殖系統疾病，好發於發情期後。</p>',
+            },
+            {
+              id: 202,
+              title: '預防方式',
+              content: '<p>最有效的預防方式是<strong>絕育手術</strong>，可大幅降低感染風險與高額的緊急手術費用。</p>',
+            },
+          ],
         },
         {
           id: 3,
@@ -301,13 +503,26 @@ export default {
           subCategoryId: null,
           status: 'draft',
           updatedAt: '2025-06-05',
-          content: '<p>貓咪下泌尿道疾病（FLUTD）是貓咪常見的泌尿系統問題，主要與壓力、飲水量不足及飲食有關。</p>',
+          sections: [
+            {
+              id: 301,
+              title: '疾病概述',
+              content: '<p>貓咪下泌尿道疾病（FLUTD）是貓咪常見的泌尿系統問題，主要與壓力、飲水量不足及飲食有關。</p>',
+            },
+          ],
         },
       ],
+
+      nextArticleId: 4,
+      nextSectionId: 400,
     };
   },
 
   computed: {
+    isDirty() {
+      return this.view === 'step1' || this.view === 'step2';
+    },
+
     filteredArticles() {
       return this.articles.filter((a) => {
         const matchTitle = !this.searchKeyword || a.title.includes(this.searchKeyword);
@@ -322,11 +537,38 @@ export default {
       const cat = this.categories.find((c) => c.id === Number(this.form.categoryId));
       return cat ? cat.subCategories : [];
     },
+
+    currentSection() {
+      return this.form.sections[this.currentSectionIndex] || null;
+    },
+  },
+
+  watch: {
+    form: {
+      handler() {
+        if (!this.isDirty) return;
+        this.saveToLocalStorage();
+      },
+      deep: true,
+    },
+  },
+
+  mounted() {
+    window.addEventListener('beforeunload', this.handleBeforeUnload);
+  },
+
+  beforeUnmount() {
+    window.removeEventListener('beforeunload', this.handleBeforeUnload);
   },
 
   methods: {
+    /* ── 工具 ── */
     emptyForm() {
-      return { title: '', content: '', categoryId: '', subCategoryId: '' };
+      return { title: '', categoryId: '', subCategoryId: '', sections: [] };
+    },
+
+    today() {
+      return new Date().toISOString().slice(0, 10);
     },
 
     getCategoryName(id) {
@@ -341,15 +583,82 @@ export default {
       return sub ? sub.name : '—';
     },
 
-    today() {
-      return new Date().toISOString().slice(0, 10);
+    /* ── localStorage ── */
+    saveToLocalStorage() {
+      const data = {
+        form: JSON.parse(JSON.stringify(this.form)),
+        isEditing: this.isEditing,
+        _editingId: this._editingId,
+      };
+      localStorage.setItem('Article', JSON.stringify(data));
+      const now = new Date();
+      this.lastSavedAt = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
     },
 
-    openCreate() {
+    clearLocalStorage() {
+      localStorage.removeItem('Article');
+      this.lastSavedAt = '';
+    },
+
+    /* ── 離開確認 ── */
+    handleBeforeUnload(e) {
+      if (this.isDirty) {
+        e.preventDefault();
+        e.returnValue = '';
+      }
+    },
+
+    async tryGoToList() {
+      const result = await Swal.fire({
+        title: '確認取消編輯',
+        text: '確認要取消嗎？未儲存的內容將會遺失。',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#e53e3e',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: '確認離開',
+        cancelButtonText: '繼續編輯',
+      });
+      if (result.isConfirmed) {
+        this.clearLocalStorage();
+        this.view = 'list';
+      }
+    },
+
+    /* ── 列表操作 ── */
+    async openCreate() {
+      const saved = localStorage.getItem('Article');
+      if (saved) {
+        const result = await Swal.fire({
+          title: '發現未完成的草稿',
+          text: '偵測到上次未完成的編輯內容，是否要還原繼續編輯？',
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#2c5282',
+          cancelButtonColor: '#6b7280',
+          confirmButtonText: '還原草稿',
+          cancelButtonText: '重新開始',
+        });
+        if (result.isConfirmed) {
+          try {
+            const data = JSON.parse(saved);
+            this.isEditing = data.isEditing || false;
+            this._editingId = data._editingId || null;
+            this.form = data.form || this.emptyForm();
+            this.formErrors = {};
+            this.currentSectionIndex = 0;
+            this.view = 'step1';
+            return;
+          } catch (_) { /* 還原失敗則重新開始 */ }
+        }
+        this.clearLocalStorage();
+      }
       this.isEditing = false;
+      this._editingId = null;
       this.form = this.emptyForm();
       this.formErrors = {};
-      this.view = 'editor';
+      this.currentSectionIndex = 0;
+      this.view = 'step1';
     },
 
     openEdit(art) {
@@ -357,52 +666,18 @@ export default {
       this._editingId = art.id;
       this.form = {
         title: art.title,
-        content: art.content,
         categoryId: art.categoryId,
         subCategoryId: art.subCategoryId || '',
+        sections: art.sections.map((s) => ({ ...s })),
       };
       this.formErrors = {};
-      this.view = 'editor';
+      this.currentSectionIndex = 0;
+      this.view = 'step1';
     },
 
-    validate() {
-      this.formErrors = {};
-      if (!this.form.title.trim()) this.formErrors.title = '請輸入文章標題';
-      if (!this.form.content || this.form.content === '<p></p>') this.formErrors.content = '請輸入文章內容';
-      if (!this.form.categoryId) this.formErrors.categoryId = '請選擇母類別';
-      return Object.keys(this.formErrors).length === 0;
-    },
-
-    handleSave(status) {
-      if (!this.validate()) return;
-
-      const payload = {
-        title: this.form.title.trim(),
-        content: this.form.content,
-        categoryId: Number(this.form.categoryId),
-        subCategoryId: this.form.subCategoryId ? Number(this.form.subCategoryId) : null,
-        status,
-        updatedAt: this.today(),
-      };
-
-      if (this.isEditing) {
-        const idx = this.articles.findIndex((a) => a.id === this._editingId);
-        if (idx !== -1) this.articles.splice(idx, 1, { id: this._editingId, ...payload });
-      } else {
-        this.articles.push({ id: this.nextArticleId++, ...payload });
-      }
-
-      this.view = 'list';
-    },
-
-    openPreview(art) {
-      this.previewData = { title: art.title, content: art.content };
-      this.showPreview = true;
-    },
-
-    previewForm() {
-      this.previewData = { title: this.form.title || '（無標題）', content: this.form.content };
-      this.showPreview = true;
+    openListPreview(art) {
+      this.previewArt = art;
+      this.showListPreview = true;
     },
 
     async confirmDelete(art) {
@@ -421,12 +696,102 @@ export default {
         Swal.fire({ icon: 'success', title: '已刪除', text: '文章已成功刪除。', timer: 1800, showConfirmButton: false });
       }
     },
+
+    /* ── Step 1：目錄段落管理 ── */
+    addSection() {
+      this.form.sections.push({ id: this.nextSectionId++, title: '', content: '' });
+    },
+
+    removeSection(idx) {
+      this.form.sections.splice(idx, 1);
+      if (this.currentSectionIndex >= this.form.sections.length) {
+        this.currentSectionIndex = Math.max(0, this.form.sections.length - 1);
+      }
+    },
+
+    /* 拖曳排序 */
+    onDragStart(idx, event) {
+      this.dragIndex = idx;
+      event.dataTransfer.effectAllowed = 'move';
+    },
+
+    onDragOver(idx) {
+      this.dragOverIndex = idx;
+    },
+
+    onDrop(idx) {
+      if (this.dragIndex === null || this.dragIndex === idx) return;
+      const sections = [...this.form.sections];
+      const [moved] = sections.splice(this.dragIndex, 1);
+      sections.splice(idx, 0, moved);
+      this.form.sections = sections;
+      this.dragIndex = null;
+      this.dragOverIndex = null;
+    },
+
+    onDragEnd() {
+      this.dragIndex = null;
+      this.dragOverIndex = null;
+    },
+
+    /* ── Step 1 → Step 2 ── */
+    validateStep1() {
+      this.formErrors = {};
+      if (!this.form.title.trim()) this.formErrors.title = '請輸入文章標題';
+      if (!this.form.categoryId) this.formErrors.categoryId = '請選擇母類別';
+      if (this.form.sections.length === 0) {
+        this.formErrors.sections = '請至少新增一個目錄段落';
+      } else if (this.form.sections.some((s) => !s.title.trim())) {
+        this.formErrors.sections = '所有段落標題不能為空';
+      }
+      return Object.keys(this.formErrors).length === 0;
+    },
+
+    goToStep2() {
+      if (!this.validateStep1()) return;
+      this.currentSectionIndex = 0;
+      this.view = 'step2';
+    },
+
+    /* ── 預覽（所有段落） ── */
+    openPreviewAll() {
+      this.showPreview = true;
+    },
+
+    /* ── 儲存 ── */
+    handleSave(status) {
+      const payload = {
+        title: this.form.title.trim(),
+        categoryId: Number(this.form.categoryId),
+        subCategoryId: this.form.subCategoryId ? Number(this.form.subCategoryId) : null,
+        sections: this.form.sections.map((s) => ({ ...s })),
+        status,
+        updatedAt: this.today(),
+      };
+
+      if (this.isEditing) {
+        const idx = this.articles.findIndex((a) => a.id === this._editingId);
+        if (idx !== -1) this.articles.splice(idx, 1, { id: this._editingId, ...payload });
+      } else {
+        this.articles.push({ id: this.nextArticleId++, ...payload });
+      }
+
+      this.clearLocalStorage();
+      this.view = 'list';
+
+      Swal.fire({
+        icon: 'success',
+        title: status === 'published' ? '文章已發布' : '草稿已儲存',
+        timer: 1600,
+        showConfirmButton: false,
+      });
+    },
   },
 };
 </script>
 
 <style>
-/* ── 頁首與按鈕沿用 doctor-admin 的通用樣式 ── */
+/* ── 頁首 ── */
 .header-actions {
   display: flex;
   align-items: center;
@@ -434,7 +799,6 @@ export default {
   flex-wrap: wrap;
 }
 
-/* ── 連結型 btn-outline（NuxtLink） ── */
 .btn-outline {
   display: inline-flex;
   align-items: center;
@@ -452,11 +816,10 @@ export default {
   transition: all 0.2s;
   white-space: nowrap;
 }
-
 .btn-outline:hover { background: #eef3fa; }
 .btn-outline:disabled { opacity: 0.45; cursor: not-allowed; }
 
-/* ── 操作按鈕（橫向） ── */
+/* ── 操作按鈕 ── */
 .action-btns {
   display: flex;
   flex-direction: row;
@@ -481,10 +844,9 @@ export default {
   background: #f0f9f0;
   color: #276749;
 }
-
 .btn-preview:hover { background: #dcf0dc; }
 
-/* ── 狀態 badge ── */
+/* ── Badge ── */
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -492,7 +854,6 @@ export default {
   font-size: 12px;
   font-weight: 600;
 }
-
 .status-badge.published { background: #e6f6ee; color: #276749; }
 .status-badge.draft { background: #f5f5f5; color: #888; }
 
@@ -503,90 +864,334 @@ export default {
   font-size: 12px;
   font-weight: 600;
 }
-
 .cat-badge.parent { background: #eef3fa; color: #2c5282; }
 .cat-badge.sub { background: #f0f9f0; color: #276749; }
-
 .no-sub { color: #ccc; font-size: 13px; }
+
+.section-count-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #f0f0f0;
+  color: #666;
+}
 
 .td-title {
   font-weight: 600;
   color: #1a2744;
-  max-width: 260px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.td-date { font-size: 13px; color: #aaa; white-space: nowrap; }
+
+/* ══════════════════════════════
+   Step 1：步驟卡片
+══════════════════════════════ */
+.step-card {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  padding: 28px 32px;
+  max-width: 820px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* 步驟指示器 */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.step-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.step-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 13px;
+  font-weight: 700;
+  background: #e0e0e0;
+  color: #999;
+  flex-shrink: 0;
+}
+
+.step-item.active .step-num {
+  background: #2c5282;
+  color: #fff;
+}
+
+.step-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #999;
+}
+
+.step-item.active .step-label {
+  color: #1a2744;
+}
+
+.step-divider {
+  flex: 1;
+  height: 2px;
+  background: #e0e0e0;
+  margin: 0 16px;
+  max-width: 80px;
+}
+
+/* 表單列 */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.form-input-lg { font-size: 15px; padding: 11px 14px; }
+
+/* 目錄段落 */
+.sections-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.btn-sm {
+  padding: 6px 12px !important;
+  font-size: 13px !important;
+}
+
+.sections-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sections-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px 16px;
+  color: #bbb;
+  font-size: 13px;
+  background: #fafafa;
+  border-radius: 8px;
+  border: 1.5px dashed #ddd;
+}
+
+.section-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: #f8f9fb;
+  border: 1.5px solid #e8e8e8;
+  border-radius: 8px;
+  transition: all 0.15s;
+  cursor: default;
+}
+
+.section-row:hover { border-color: #c0cfe8; background: #f2f5fa; }
+
+.section-row.drag-over {
+  border-color: #2c5282;
+  background: #eef3fa;
+}
+
+.section-row.dragging {
+  opacity: 0.45;
+}
+
+.section-drag-handle {
+  color: #bbb;
+  cursor: grab;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.section-drag-handle:active { cursor: grabbing; }
+
+.section-order-num {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #2c5282;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-title-input {
+  flex: 1;
+  background: #fff;
+}
+
+/* 步驟底部 */
+.step-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 8px;
+  border-top: 1px solid #f0f0f0;
+}
+
+/* ══════════════════════════════
+   Step 2：兩欄編輯
+══════════════════════════════ */
+.editor2-layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 20px;
+  align-items: start;
+}
+
+/* 左側段落導航 */
+.section-nav-panel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  position: sticky;
+  top: 80px;
+}
+
+.section-nav-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #f8f9fb;
+}
+
+.section-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 14px;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-bottom: 1px solid #f5f5f5;
+}
+
+.section-nav-item:last-child { border-bottom: none; }
+.section-nav-item:hover { background: #f5f7fa; }
+.section-nav-item.active { background: #eef3fa; }
+
+.section-nav-num {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #888;
+  font-size: 10px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.section-nav-item.active .section-nav-num {
+  background: #2c5282;
+  color: #fff;
+}
+
+.section-nav-title {
+  font-size: 13px;
+  color: #444;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.td-date { font-size: 13px; color: #aaa; white-space: nowrap; }
-
-/* ── 編輯器佈局 ── */
-.editor-layout {
-  display: grid;
-  grid-template-columns: 1fr 280px;
-  gap: 20px;
-  align-items: start;
+.section-nav-item.active .section-nav-title {
+  color: #1a2744;
+  font-weight: 600;
 }
 
-.editor-main { min-width: 0; }
-
-.editor-card {
+/* 右側編輯主區 */
+.section-editor-main {
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  padding: 22px;
-  margin-bottom: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.side-section-title {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #1a2744;
-  padding-bottom: 10px;
-  border-bottom: 1px solid #f0f0f0;
-}
-
-.form-input-lg { font-size: 16px; padding: 11px 14px; }
-
-.richtext-wrap {
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  min-height: 360px;
   overflow: hidden;
 }
 
-.richtext-wrap:focus-within { border-color: #2c5282; }
-
-.preview-btn {
-  width: 100%;
-  justify-content: center;
-}
-
-.preview-hint {
-  font-size: 12px;
-  color: #bbb;
-  text-align: center;
-}
-
-.cat-manage-link {
-  display: inline-flex;
+.section-editor-header {
+  display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  color: #2c5282;
-  text-decoration: none;
-  margin-top: 4px;
+  justify-content: space-between;
+  padding: 16px 22px;
+  border-bottom: 1px solid #f0f0f0;
+  background: #f8f9fb;
 }
 
-.cat-manage-link:hover { text-decoration: underline; }
+.section-editor-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a2744;
+}
 
-/* ── 預覽 Modal ── */
+.section-editor-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #2c5282;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.autosave-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #52a169;
+}
+
+/* 富文本編輯區（無外框） */
+.section-richtext {
+  padding: 0;
+  min-height: 680px;
+}
+
+/* ══════════════════════════════
+   預覽 Modal
+══════════════════════════════ */
 .modal-preview {
   max-width: 860px;
   width: 95vw;
@@ -617,26 +1222,45 @@ export default {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
   padding-bottom: 12px;
   border-bottom: 3px solid #5aa0c8;
 }
 
 .content-title-preview {
-  font-size: 20px;
+  font-size: 26px;
   font-weight: bold;
   color: #143c64;
   margin: 0;
 }
 
-.section-content-preview { margin-bottom: 20px; }
+.preview-subcategory {
+  font-size: 26px;
+  font-weight: bold;
+  color: #143c64;
+  margin: 0 0 20px;
+}
+
+.preview-section-block {
+  margin-bottom: 28px;
+}
+
+.preview-section-title {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #143c64;
+  margin-bottom: 12px;
+  padding-left: 12px;
+  border-left: 4px solid #5aa0c8;
+}
 
 .rich-text-content-preview {
   color: #333;
   font-size: 15px;
   line-height: 1.8;
 }
-
 .rich-text-content-preview p { margin: 0 0 12px; }
 .rich-text-content-preview strong { font-weight: 700; }
 .rich-text-content-preview h1,
@@ -655,12 +1279,19 @@ export default {
 
 /* ── RWD ── */
 @media (max-width: 960px) {
-  .editor-layout {
+  .editor2-layout {
+    grid-template-columns: 1fr;
+  }
+  .section-nav-panel {
+    position: static;
+  }
+  .form-row {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 600px) {
-  .data-table { min-width: 680px; }
+  .data-table { min-width: 720px; }
+  .step-card { padding: 20px 16px; }
 }
 </style>
