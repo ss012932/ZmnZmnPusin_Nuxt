@@ -50,6 +50,7 @@
 
 <script setup>
 definePageMeta({ layout: false });
+useHead({ title: '登入 | 人人動物醫院後台' });
 </script>
 
 <script>

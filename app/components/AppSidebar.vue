@@ -2,7 +2,7 @@
   <aside class="sidebar" :class="{ collapsed: collapsed, 'mobile-open': mobileOpen }">
     <!-- Logo -->
     <div class="sidebar-logo">
-      <div class="logo-mark">人人</div>
+      <img src="/Mask group.png" alt="人人動物醫院" class="logo-mark" />
       <span class="logo-text" v-show="!collapsed">後台管理</span>
       <!-- 行動版關閉按鈕 -->
       <button class="mobile-close-btn" v-if="mobileOpen" @click="$emit('close')">
@@ -117,14 +117,8 @@ export default {
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  background: #2c5282;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
+  object-fit: contain;
 }
 
 .logo-text {

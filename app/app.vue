@@ -24,7 +24,7 @@ body {
 <script setup lang="ts">
 // 全站預設 SEO 設定（各頁面會覆蓋此設定）
 useHead({
-  titleTemplate: "%s | Wedding Invitation System",
+  titleTemplate: "%s | 人人動物醫院後台管理系統",
   htmlAttrs: {
     lang: "zh-TW",
   },

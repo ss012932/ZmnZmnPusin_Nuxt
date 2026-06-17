@@ -2,8 +2,8 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { showCustom } from "~/composables/utils/alert.js";
 
 const apiClient = axios.create({
-  baseURL: "http://localhost:7129/api",
-  //baseURL: "https://petcare-api.christylove.com.tw/api",
+  //baseURL: "http://localhost:7129/api",
+  baseURL: "https://zmnzmnpusin-api.zmnzmnpusin.com.tw/api",
   withCredentials: true,
 });
 
@@ -184,6 +184,114 @@ export const staffsAPI = {
   // ===== 軟刪除員工 =====
   async remove(id: number) {
     const response = await apiClient.delete(`/staffs/${id}`);
+    return response.data;
+  },
+};
+
+// ===== 類別管理 API =====
+export const categoriesAPI = {
+  // ── 母類別 ──
+  async getAllMain() {
+    const response = await apiClient.get('/categories/main');
+    return response.data;
+  },
+  async createMain(data: { name: string; description?: string; sortOrder?: number; isActive?: boolean }) {
+    const response = await apiClient.post('/categories/main', data);
+    return response.data;
+  },
+  async updateMain(id: number, data: { name: string; description?: string; sortOrder?: number; isActive?: boolean }) {
+    const response = await apiClient.put(`/categories/main/${id}`, data);
+    return response.data;
+  },
+  async deleteMain(id: number) {
+    const response = await apiClient.delete(`/categories/main/${id}`);
+    return response.data;
+  },
+
+  // ── 子類別 ──
+  async getSubByMain(mainCategoryId: number) {
+    const response = await apiClient.get('/categories/sub', { params: { mainCategoryId } });
+    return response.data;
+  },
+  async createSub(data: { mainCategoryId: number; name: string; description?: string; sortOrder?: number; isActive?: boolean }) {
+    const response = await apiClient.post('/categories/sub', data);
+    return response.data;
+  },
+  async updateSub(id: number, data: { name: string; description?: string; sortOrder?: number; isActive?: boolean }) {
+    const response = await apiClient.put(`/categories/sub/${id}`, data);
+    return response.data;
+  },
+  async deleteSub(id: number) {
+    const response = await apiClient.delete(`/categories/sub/${id}`);
+    return response.data;
+  },
+
+  // ── 排序 ──
+  async updateMainSortOrders(items: Array<{ id: number; sortOrder: number }>) {
+    const response = await apiClient.patch('/categories/main/sort-orders', { items });
+    return response.data;
+  },
+  async updateSubSortOrders(items: Array<{ id: number; sortOrder: number }>) {
+    const response = await apiClient.patch('/categories/sub/sort-orders', { items });
+    return response.data;
+  },
+};
+
+// ===== 文章管理 API =====
+export const articlesAPI = {
+  // ===== 取得文章列表（可篩選） =====
+  async getList(params: { status?: string; mainCategoryId?: number; keyword?: string } = {}) {
+    const response = await apiClient.get('/articles', { params });
+    return response.data;
+  },
+
+  // ===== 取得文章詳細（含段落） =====
+  async getDetail(id: number) {
+    const response = await apiClient.get(`/articles/${id}`);
+    return response.data;
+  },
+
+  // ===== 新增文章 =====
+  async create(data: {
+    title: string;
+    mainCategoryId: number;
+    subCategoryId?: number | null;
+    summary?: string;
+    status: string;
+    isFeatured: boolean;
+    sections: Array<{ sectionTitle: string; content?: string; sortOrder: number; isHide?: boolean }>;
+  }) {
+    const response = await apiClient.post('/articles', data);
+    return response.data;
+  },
+
+  // ===== 更新文章 =====
+  async update(id: number, data: {
+    title: string;
+    mainCategoryId: number;
+    subCategoryId?: number | null;
+    summary?: string;
+    status: string;
+    isFeatured: boolean;
+    sections: Array<{ sectionTitle: string; content?: string; sortOrder: number; isHide?: boolean }>;
+  }) {
+    const response = await apiClient.put(`/articles/${id}`, data);
+    return response.data;
+  },
+
+  // ===== 軟刪除文章 =====
+  async remove(id: number) {
+    const response = await apiClient.delete(`/articles/${id}`);
+    return response.data;
+  },
+
+  // ===== 上傳封面圖（multipart/form-data，欄位名：cover） =====
+  async uploadCover(id: number, file: File) {
+    const formData = new FormData();
+    formData.append('cover', file);
+    const response = await apiClient.post(`/articles/${id}/cover`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
   },
 };
