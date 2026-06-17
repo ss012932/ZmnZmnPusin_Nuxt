@@ -2,19 +2,19 @@
   <div class="login-page">
     <div class="login-card">
       <div class="login-logo">
-        <div class="logo-badge">人人</div>
+        <img src="/Mask group.png" alt="人人動物醫院" class="logo-img" />
         <h1 class="login-title">後台管理系統</h1>
         <p class="login-subtitle">人人動物醫院埔心分院</p>
       </div>
 
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="form-group" :class="{ error: errors.account }">
-          <label class="form-label">帳號</label>
+          <label class="form-label">信箱</label>
           <input
             class="form-input"
             type="text"
             v-model="form.account"
-            placeholder="請輸入帳號"
+            placeholder="請輸入信箱"
             autocomplete="username"
           />
           <span class="form-error" v-if="errors.account">{{ errors.account }}</span>
@@ -48,8 +48,12 @@
   </div>
 </template>
 
-<script>
+<script setup>
 definePageMeta({ layout: false });
+</script>
+
+<script>
+import api from '~/composables/utils/api';
 
 export default {
   name: 'AdminLoginPage',
@@ -85,16 +89,25 @@ export default {
 
       this.loading = true;
 
-      // 模擬 API 驗證 (帳號: admin / 密碼: admin123)
-      await new Promise((r) => setTimeout(r, 800));
+      try {
+        await api.post('/staffs/login', {
+          email: this.form.account,
+          password: this.form.password,
+        });
 
-      if (this.form.account === 'admin' && this.form.password === 'admin123') {
-        navigateTo('/admin/doctors');
-      } else {
-        this.loginError = '帳號或密碼錯誤，請重新輸入';
+        const auth = useBackofficeAuth();
+        await auth.check(true);
+
+        await navigateTo(this.$route.query.redirect || '/admin/doctors');
+      } catch (error) {
+        const responseData = error?.response?.data;
+        this.loginError =
+          responseData?.detail ||
+          responseData?.message ||
+          '帳號或密碼錯誤，請重新輸入';
+      } finally {
+        this.loading = false;
       }
-
-      this.loading = false;
     },
   },
 };
@@ -127,18 +140,13 @@ export default {
   margin-bottom: 32px;
 }
 
-.logo-badge {
-  width: 56px;
-  height: 56px;
-  background: #2c5282;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  font-weight: 700;
-  color: #fff;
+.logo-img {
+  width: 64px;
+  height: 64px;
+  object-fit: contain;
+  border-radius: 12px;
   margin: 0 auto 16px;
+  display: block;
 }
 
 .login-title {

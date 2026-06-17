@@ -5,11 +5,11 @@
     <div class="page-header">
       <div>
         <h2 class="page-title">權限管理</h2>
-        <p class="page-desc">管理後台管理員帳號與存取權限</p>
+        <p class="page-desc">管理後台員工帳號與存取權限</p>
       </div>
       <button class="btn btn-primary" @click="openCreate">
         <iconify-icon icon="mdi:account-plus-outline" width="18"></iconify-icon>
-        新增管理員
+        新增員工
       </button>
     </div>
 
@@ -19,7 +19,7 @@
         <iconify-icon icon="mdi:account-group-outline" width="28" class="stat-icon"></iconify-icon>
         <div>
           <div class="stat-num">{{ admins.length }}</div>
-          <div class="stat-label">管理員總數</div>
+          <div class="stat-label">員工總數</div>
         </div>
       </div>
       <div class="stat-card">
@@ -38,11 +38,13 @@
       </div>
     </div>
 
+    <div class="form-alert" v-if="loadError">{{ loadError }}</div>
+
     <!-- 篩選列 -->
     <div class="filter-bar">
       <div class="search-wrap">
         <iconify-icon icon="mdi:magnify" width="17" class="search-icon"></iconify-icon>
-        <input class="search-input" type="text" v-model="searchKeyword" placeholder="搜尋姓名 / 帳號 / Email..." />
+        <input class="search-input" type="text" v-model="searchKeyword" placeholder="搜尋姓名 / Email..." />
       </div>
       <select class="filter-select" v-model="filterStatus">
         <option value="">全部狀態</option>
@@ -57,16 +59,20 @@
         <thead>
           <tr>
             <th>姓名</th>
-            <th>帳號</th>
             <th>Email</th>
+            <th>權限</th>
             <th>狀態</th>
             <th>建立時間</th>
+            <th>更新時間</th>
             <th style="width:220px">操作</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-if="filteredAdmins.length === 0">
-            <td colspan="6" class="empty-row">目前沒有符合條件的管理員</td>
+          <tr v-if="loading">
+            <td colspan="7" class="empty-row">資料載入中...</td>
+          </tr>
+          <tr v-else-if="filteredAdmins.length === 0">
+            <td colspan="7" class="empty-row">目前沒有符合條件的員工</td>
           </tr>
           <tr v-for="admin in filteredAdmins" :key="admin.id">
             <td>
@@ -75,14 +81,25 @@
                 <span class="td-name">{{ admin.name }}</span>
               </div>
             </td>
-            <td class="td-mono">{{ admin.account }}</td>
             <td class="td-mono">{{ admin.email }}</td>
+            <td>
+              <span class="role-badge" :class="{ admin: admin.isAdmin }">
+                {{ admin.isAdmin ? '管理員' : '一般員工' }}
+              </span>
+            </td>
             <td>
               <span class="status-badge" :class="admin.status">
                 {{ admin.status === 'active' ? '啟用中' : '已停用' }}
               </span>
             </td>
-            <td class="td-date">{{ admin.createdAt }}</td>
+            <td class="td-date">
+              <div>{{ admin.createdAt }}</div>
+              <div class="td-by" v-if="admin.createdBy !== '-'">{{ admin.createdBy }}</div>
+            </td>
+            <td class="td-date">
+              <div>{{ admin.updatedAt }}</div>
+              <div class="td-by" v-if="admin.updatedBy !== '-'">{{ admin.updatedBy }}</div>
+            </td>
             <td>
               <div class="action-btns">
                 <button class="btn-action btn-edit" @click="openEdit(admin)" title="編輯">
@@ -97,7 +114,6 @@
                   class="btn-action btn-delete"
                   @click="confirmDelete(admin)"
                   title="刪除"
-                  :disabled="admin.account === 'admin'"
                 >
                   <iconify-icon icon="mdi:trash-can-outline" width="14"></iconify-icon>
                   刪除
@@ -115,7 +131,7 @@
         <div class="modal-header">
           <h3 class="modal-title">
             <iconify-icon :icon="isEditing ? 'mdi:account-edit-outline' : 'mdi:account-plus-outline'" width="20"></iconify-icon>
-            {{ isEditing ? '編輯管理員' : '新增管理員' }}
+            {{ isEditing ? '編輯員工' : '新增員工' }}
           </h3>
           <button class="modal-close" @click="closeModal">
             <iconify-icon icon="mdi:close" width="20"></iconify-icon>
@@ -132,15 +148,35 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label">帳號 <span class="required">*</span></label>
-              <input class="form-input" type="text" v-model="form.account" placeholder="輸入登入帳號" :disabled="isEditing" />
-              <span class="form-error" v-if="formErrors.account">{{ formErrors.account }}</span>
+              <label class="form-label">
+                信箱 <span class="required" v-if="!isEditing">*</span>
+              </label>
+              <input
+                class="form-input"
+                type="email"
+                v-model="form.email"
+                placeholder="example@clinic.com"
+                :disabled="isEditing"
+                :style="isEditing ? 'background:#f5f5f5; color:#999; cursor:not-allowed;' : ''"
+              />
+              <span class="form-hint" v-if="isEditing" style="font-size:12px;color:#aaa;margin-top:4px;display:block;">
+                Email 不可修改
+              </span>
+              <span class="form-error" v-if="formErrors.email">{{ formErrors.email }}</span>
             </div>
 
             <div class="form-group fg-full">
-              <label class="form-label">Email <span class="required">*</span></label>
-              <input class="form-input" type="email" v-model="form.email" placeholder="example@clinic.com" />
-              <span class="form-error" v-if="formErrors.email">{{ formErrors.email }}</span>
+              <label class="form-label">權限</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" v-model="form.isAdmin" :value="true" />
+                  <span>管理員（可新增員工）</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" v-model="form.isAdmin" :value="false" />
+                  <span>一般員工</span>
+                </label>
+              </div>
             </div>
 
             <div class="form-group fg-full">
@@ -174,10 +210,17 @@
   </div>
 </template>
 
-<script>
-import Swal from 'sweetalert2';
+<script setup>
+definePageMeta({
+  layout: 'admin',
+  middleware: ['backoffice-auth', 'auth'],
+  requiresAdmin: true,
+});
+</script>
 
-definePageMeta({ layout: 'admin' });
+<script>
+import api, { authAPI, staffsAPI } from '~/composables/utils/api';
+import Swal from 'sweetalert2';
 
 export default {
   name: 'AdminPermissionsPage',
@@ -186,6 +229,9 @@ export default {
     return {
       searchKeyword: '',
       filterStatus: '',
+      loading: false,
+      saving: false,
+      loadError: '',
       showModal: false,
       isEditing: false,
       showPw: false,
@@ -194,32 +240,22 @@ export default {
 
       form: this.emptyForm(),
 
-      admins: [
-        {
-          id: 1,
-          name: '系統管理員',
-          account: 'admin',
-          email: 'admin@clinic.com',
-          status: 'active',
-          createdAt: '2024-01-01',
-        },
-        {
-          id: 2,
-          name: '林小華',
-          account: 'lin_hua',
-          email: 'linhua@clinic.com',
-          status: 'active',
-          createdAt: '2024-06-10',
-        },
-      ],
+      admins: [],
     };
+  },
+
+  mounted() {
+    this.loadStaffs();
   },
 
   computed: {
     filteredAdmins() {
       return this.admins.filter((a) => {
         const kw = this.searchKeyword.toLowerCase();
-        const matchKw = !kw || a.name.includes(kw) || a.account.includes(kw) || a.email.toLowerCase().includes(kw);
+        const matchKw =
+          !kw ||
+          a.name.toLowerCase().includes(kw) ||
+          a.email.toLowerCase().includes(kw);
         const matchStatus = !this.filterStatus || a.status === this.filterStatus;
         return matchKw && matchStatus;
       });
@@ -227,8 +263,54 @@ export default {
   },
 
   methods: {
+    async loadStaffs() {
+      this.loading = true;
+      this.loadError = '';
+
+      try {
+        const response = await api.get('/staffs');
+        const result = response.data;
+
+        if (!result?.success) {
+          throw new Error(result?.message || '取得員工列表失敗');
+        }
+
+        this.admins = (result.data || []).map(this.normalizeStaff);
+      } catch (error) {
+        const responseData = error?.response?.data;
+        this.loadError =
+          responseData?.detail ||
+          responseData?.message ||
+          error?.message ||
+          '取得員工列表失敗';
+      } finally {
+        this.loading = false;
+      }
+    },
+
+    normalizeStaff(staff) {
+      return {
+        id: staff.id,
+        name: staff.name || '',
+        account: staff.email || '',
+        email: staff.email || '',
+        isAdmin: Boolean(staff.isAdmin),
+        status: staff.isActive ? 'active' : 'inactive',
+        createdAt: this.formatDate(staff.createdAt),
+        updatedAt: this.formatDate(staff.updatedAt),
+        lastLoginAt: this.formatDate(staff.lastLoginAt),
+        createdBy: staff.createdBy || '-',
+        updatedBy: staff.updatedBy || '-',
+      };
+    },
+
+    formatDate(value) {
+      if (!value) return '-';
+      return String(value).slice(0, 10);
+    },
+
     emptyForm() {
-      return { name: '', account: '', email: '', password: '', status: 'active' };
+      return { name: '', email: '', isAdmin: false, status: 'active' };
     },
 
     openCreate() {
@@ -242,7 +324,12 @@ export default {
     openEdit(admin) {
       this.isEditing = true;
       this._editingId = admin.id;
-      this.form = { name: admin.name, account: admin.account, email: admin.email, password: '', status: admin.status };
+      this.form = {
+        name: admin.name,
+        email: admin.email,
+        isAdmin: admin.isAdmin,
+        status: admin.status,
+      };
       this.formErrors = {};
       this.showModal = true;
     },
@@ -252,46 +339,98 @@ export default {
     validate() {
       this.formErrors = {};
       if (!this.form.name.trim()) this.formErrors.name = '請輸入姓名';
-      if (!this.form.account.trim()) this.formErrors.account = '請輸入帳號';
-      if (!this.form.email.trim()) {
-        this.formErrors.email = '請輸入 Email';
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email)) {
-        this.formErrors.email = 'Email 格式不正確';
-      }
-      if (!this.isEditing && this.form.password.length < 8) {
-        this.formErrors.password = '密碼至少需要 8 個字元';
+      if (!this.isEditing) {
+        if (!this.form.email.trim()) {
+          this.formErrors.email = '請輸入 Email';
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.form.email)) {
+          this.formErrors.email = 'Email 格式不正確';
+        }
       }
       return Object.keys(this.formErrors).length === 0;
     },
 
-    handleSave() {
+    async handleSave() {
       if (!this.validate()) return;
 
       if (this.isEditing) {
-        const idx = this.admins.findIndex((a) => a.id === this._editingId);
-        if (idx !== -1) {
-          this.admins[idx].name = this.form.name.trim();
-          this.admins[idx].email = this.form.email.trim();
-          this.admins[idx].status = this.form.status;
-        }
-      } else {
-        this.admins.push({
-          id: this.nextId++,
-          name: this.form.name.trim(),
-          account: this.form.account.trim(),
-          email: this.form.email.trim(),
-          status: this.form.status,
-          createdAt: new Date().toISOString().slice(0, 10),
+        this.saving = true;
+        this.closeModal();
+        Swal.fire({
+          title: '儲存中...',
+          allowOutsideClick: false,
+          showConfirmButton: false,
+          didOpen: () => Swal.showLoading(),
         });
+        try {
+          const result = await staffsAPI.update(this._editingId, {
+            name:     this.form.name.trim(),
+            isAdmin:  this.form.isAdmin,
+            isActive: this.form.status === 'active',
+          });
+
+          if (!result?.success) throw new Error(result?.message || '更新失敗');
+
+          await this.loadStaffs();
+
+          Swal.fire({
+            icon: 'success',
+            title: '已更新',
+            timer: 1800,
+            showConfirmButton: false,
+            timerProgressBar: true,
+          });
+        } catch (err) {
+          const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || '更新失敗，請再試一次';
+          Swal.fire({ icon: 'error', title: '更新失敗', text: msg });
+        } finally {
+          this.saving = false;
+        }
+        return;
       }
 
+      // 新增員工
+      this.saving = true;
       this.closeModal();
+      Swal.fire({
+        title: '建立帳號中...',
+        text: '正在建立帳號並寄送重設密碼信，請稍候',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
+      });
+      try {
+        const result = await staffsAPI.create({
+          name:     this.form.name.trim(),
+          email:    this.form.email.trim(),
+          isAdmin:  this.form.isAdmin,
+          isActive: this.form.status === 'active',
+        });
+
+        if (!result?.success) throw new Error(result?.message || '新增失敗');
+
+        const newStaff = result.data;
+        this.admins.unshift(this.normalizeStaff(newStaff));
+
+        Swal.fire({
+          icon: 'success',
+          title: '帳號已建立',
+          text: `員工帳號已建立，重設密碼信件已寄送至 ${newStaff.email}。`,
+          timer: 2500,
+          showConfirmButton: false,
+          timerProgressBar: true,
+        });
+      } catch (err) {
+        const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || '新增失敗，請再試一次';
+        Swal.fire({ icon: 'error', title: '新增失敗', text: msg });
+      } finally {
+        this.saving = false;
+      }
     },
 
     async confirmDelete(admin) {
-      const result = await Swal.fire({
-        title: '確認刪除管理員',
-        html: `確定要刪除 <strong>${admin.name}（${admin.account}）</strong> 嗎？<br>此操作無法復原。`,
+      const confirm = await Swal.fire({
+        title: '確認刪除員工',
+        html: `確定要刪除 <strong>${admin.name}（${admin.email}）</strong> 嗎？<br>帳號將停用並無法登入。`,
         icon: 'warning',
         showCancelButton: true,
         confirmButtonColor: '#e53e3e',
@@ -299,9 +438,31 @@ export default {
         confirmButtonText: '確認刪除',
         cancelButtonText: '取消',
       });
-      if (result.isConfirmed) {
+      if (!confirm.isConfirmed) return;
+
+      Swal.fire({
+        title: '刪除中...',
+        allowOutsideClick: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      try {
+        const result = await staffsAPI.remove(admin.id);
+        if (!result?.success) throw new Error(result?.message || '刪除失敗');
+
         this.admins = this.admins.filter((a) => a.id !== admin.id);
-        Swal.fire({ icon: 'success', title: '已刪除', text: `管理員「${admin.name}」已移除。`, timer: 1800, showConfirmButton: false });
+        Swal.fire({
+          icon: 'success',
+          title: '已刪除',
+          text: `員工「${admin.name}」已移除。`,
+          timer: 1800,
+          showConfirmButton: false,
+          timerProgressBar: true,
+        });
+      } catch (err) {
+        const msg = err?.response?.data?.detail || err?.response?.data?.message || err?.message || '刪除失敗，請再試一次';
+        Swal.fire({ icon: 'error', title: '刪除失敗', text: msg });
       }
     },
 
@@ -316,8 +477,30 @@ export default {
         confirmButtonText: '確認寄送',
         cancelButtonText: '取消',
       });
-      if (result.isConfirmed) {
-        Swal.fire({ icon: 'success', title: '已寄送', text: `重置密碼信件已送出至 ${admin.email}。`, timer: 2200, showConfirmButton: false });
+      if (!result.isConfirmed) return;
+
+      Swal.fire({
+        title: '寄送中...',
+        text: `正在寄送重置密碼信件至 ${admin.email}`,
+        allowOutsideClick: false,
+        allowEscapeKey: false,
+        showConfirmButton: false,
+        didOpen: () => Swal.showLoading(),
+      });
+
+      try {
+        await authAPI.forgotPassword(admin.email);
+        Swal.fire({
+          icon: 'success',
+          title: '已寄送',
+          text: `重置密碼信件已送出至 ${admin.email}，請於 30 分鐘內完成重設。`,
+          timer: 2500,
+          showConfirmButton: false,
+          timerProgressBar: true,
+        });
+      } catch (err) {
+        const msg = err?.response?.data?.detail || err?.response?.data?.message || '寄送失敗，請稍後再試';
+        Swal.fire({ icon: 'error', title: '寄送失敗', text: msg });
       }
     },
   },
@@ -360,6 +543,16 @@ export default {
   margin-top: 2px;
 }
 
+.form-alert {
+  background: #fff5f5;
+  border: 1px solid #fed7d7;
+  border-radius: 8px;
+  color: #e53e3e;
+  font-size: 13px;
+  margin-bottom: 18px;
+  padding: 10px 14px;
+}
+
 /* ── 表格 ── */
 .admin-name-cell {
   display: flex;
@@ -393,6 +586,12 @@ export default {
   white-space: nowrap;
 }
 
+.td-by {
+  font-size: 11px;
+  color: #bbb;
+  margin-top: 2px;
+}
+
 .status-badge {
   display: inline-block;
   padding: 3px 10px;
@@ -403,6 +602,21 @@ export default {
 
 .status-badge.active { background: #e6f6ee; color: #276749; }
 .status-badge.inactive { background: #f5f5f5; color: #888; }
+
+.role-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: #f5f5f5;
+  color: #666;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.role-badge.admin {
+  background: #eef3fa;
+  color: #2c5282;
+}
 
 /* ── 操作按鈕（橫向） ── */
 .action-btns {
