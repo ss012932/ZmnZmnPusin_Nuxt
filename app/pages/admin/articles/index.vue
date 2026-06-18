@@ -380,7 +380,11 @@
               </span>
             </div>
             <ClientOnly>
-              <RichTextEditor v-model="currentSection.content" />
+              <RichTextEditor
+                :key="currentSection._key || currentSectionIndex"
+                v-model="currentSection.content"
+                :upload-handler="uploadHandler"
+              />
             </ClientOnly>
           </template>
           <div class="no-section-hint" v-else>
@@ -880,6 +884,16 @@ export default {
         this.coverUploading = false;
         e.target.value = '';
       }
+    },
+
+    // ===== 富文本編輯器：內文圖片上傳處理器 =====
+    // 回傳圖片網址字串給編輯器，編輯器就會插入該 URL 而不是 base64。
+    // 相容後端回傳 { url } 或 { data: { url } } 兩種格式。
+    async uploadHandler(file) {
+      const res = await articlesAPI.uploadImage(file);
+      const url = res?.data?.url || res?.url;
+      if (!url) throw new Error('伺服器未回傳圖片 URL');
+      return url;
     },
   },
 };

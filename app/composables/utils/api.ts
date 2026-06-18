@@ -2,8 +2,8 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { showCustom } from "~/composables/utils/alert.js";
 
 const apiClient = axios.create({
-  //baseURL: "http://localhost:7129/api",
-  baseURL: "https://zmnzmnpusin-api.zmnzmnpusin.com.tw/api",
+  baseURL: "http://localhost:7129/api",
+  //baseURL: "https://zmnzmnpusin-api.zmnzmnpusin.com.tw/api",
   withCredentials: true,
 });
 
@@ -290,6 +290,18 @@ export const articlesAPI = {
     const formData = new FormData();
     formData.append('cover', file);
     const response = await apiClient.post(`/articles/${id}/cover`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  },
+
+  // ===== 上傳「內文圖片」（富文本編輯器用，與封面分開） =====
+  // ⚠️ 請把下面的路徑改成你後端（AzureFunction）實際的內文圖片上傳端點，
+  //    後端需：接收 multipart/form-data（欄位名 file）→ 存到 Blob → 回傳 { url } 或 { data: { url } }
+  async uploadImage(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await apiClient.post('/articles/upload-image', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
