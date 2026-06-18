@@ -870,12 +870,58 @@ export default {
       }
     },
 
+    // ===== 上傳前將圖片壓縮並轉成 WebP =====
+    // 透過 canvas 重新繪製後輸出 webp，可大幅降低容量、加快網站反應速度。
+    // 動圖（gif）轉 webp 會失去動畫、瀏覽器不支援或轉檔後反而更大時，皆退回原檔。
+    async compressToWebp(file, { maxSize = 1920, quality = 0.82 } = {}) {
+      if (!file || !file.type.startsWith('image/') || file.type === 'image/gif') return file;
+
+      try {
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+
+        const img = await new Promise((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = reject;
+          image.src = dataUrl;
+        });
+
+        let width = img.naturalWidth;
+        let height = img.naturalHeight;
+        if (width > maxSize || height > maxSize) {
+          const ratio = Math.min(maxSize / width, maxSize / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', quality));
+        // 瀏覽器不支援 webp 輸出，或轉檔後反而更大時，保留原檔
+        if (!blob || blob.size >= file.size) return file;
+
+        const newName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+        return new File([blob], newName, { type: 'image/webp', lastModified: Date.now() });
+      } catch (_) {
+        return file; // 轉檔發生例外時退回原檔，確保上傳流程不中斷
+      }
+    },
+
     async onCoverFileChange(e) {
       const file = e.target.files?.[0];
       if (!file || !this._editingId) return;
       this.coverUploading = true;
       try {
-        const res = await articlesAPI.uploadCover(this._editingId, file);
+        const webpFile = await this.compressToWebp(file);
+        const res = await articlesAPI.uploadCover(this._editingId, webpFile);
         this.coverPreviewUrl = res.data?.url || null;
         Swal.fire({ icon: 'success', title: '封面圖已上傳', timer: 1400, showConfirmButton: false });
       } catch (e) {
@@ -890,7 +936,8 @@ export default {
     // 回傳圖片網址字串給編輯器，編輯器就會插入該 URL 而不是 base64。
     // 相容後端回傳 { url } 或 { data: { url } } 兩種格式。
     async uploadHandler(file) {
-      const res = await articlesAPI.uploadImage(file);
+      const webpFile = await this.compressToWebp(file);
+      const res = await articlesAPI.uploadImage(webpFile);
       const url = res?.data?.url || res?.url;
       if (!url) throw new Error('伺服器未回傳圖片 URL');
       return url;
