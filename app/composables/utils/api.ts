@@ -296,8 +296,6 @@ export const articlesAPI = {
   },
 
   // ===== 上傳「內文圖片」（富文本編輯器用，與封面分開） =====
-  // ⚠️ 請把下面的路徑改成你後端（AzureFunction）實際的內文圖片上傳端點，
-  //    後端需：接收 multipart/form-data（欄位名 file）→ 存到 Blob → 回傳 { url } 或 { data: { url } }
   async uploadImage(file: File) {
     const formData = new FormData();
     formData.append('file', file);
@@ -335,10 +333,8 @@ export const authAPI = {
     try {
       await apiClient.post("/staffs/logout");
     } catch (error) {
-      // 即使 API 失敗也繼續清除本地資料
       console.error("登出 API 呼叫失敗，但仍會清除本地資料", error);
     } finally {
-      // 不管 API 是否成功，都清除本地資料
       if (import.meta.client) {
         document.cookie =
           "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -376,5 +372,79 @@ export const authAPI = {
   async emailBind(token: string) {
     const response = await apiClient.post("/email-bind", { token });
     return response.data;
+  },
+};
+
+// ===== 前台公開 API（不需登入） =====
+
+export interface PublicArticle {
+  id: number;
+  title: string;
+  code: string | null;
+  summary: string | null;
+  coverImageUrl: string | null;
+  publishedAt: string | null;
+  isFeatured: boolean;
+  sortOrder: number;
+}
+
+export interface PublicSubCategory {
+  id: number;
+  name: string;
+  code: string | null;
+  description: string | null;
+  sortOrder: number;
+  articles: PublicArticle[];
+}
+
+export interface PublicMainCategory {
+  id: number;
+  name: string;
+  code: string | null;
+  description: string | null;
+  sortOrder: number;
+  subCategories: PublicSubCategory[];
+  articles: PublicArticle[];
+}
+
+export interface PublicArticleSection {
+  id: number;
+  sectionTitle: string;
+  content: string | null;
+  sortOrder: number;
+  isHide: boolean;
+}
+
+export interface PublicArticleDetail {
+  id: number;
+  title: string;
+  code: string;
+  summary: string | null;
+  coverImageUrl: string | null;
+  status: string;
+  isFeatured: boolean;
+  mainCategoryId: number;
+  mainCategoryName: string | null;
+  subCategoryId: number | null;
+  subCategoryName: string | null;
+  publishedAt: string | null;
+  sections: PublicArticleSection[];
+}
+
+export const publicAPI = {
+  // ===== 取得所有啟用類別（母類別巢狀含子類別，子類別含文章） =====
+  async getCategories(): Promise<PublicMainCategory[]> {
+    const response = await apiClient.get('/public/categories');
+    return response.data?.data || [];
+  },
+
+  // ===== 依 Code 取得已發布文章詳細（含可見段落） =====
+  async getArticleByCode(code: string): Promise<PublicArticleDetail | null> {
+    try {
+      const response = await apiClient.get(`/public/articles/${code}`);
+      return response.data?.data || null;
+    } catch {
+      return null;
+    }
   },
 };

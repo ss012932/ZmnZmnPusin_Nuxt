@@ -83,6 +83,7 @@
               id="desktop-health-menu"
               class="desktop-health-menu"
             >
+              <!-- 第一欄：母類別 -->
               <div class="desktop-category-list">
                 <button
                   v-for="category in healthCategories"
@@ -90,22 +91,42 @@
                   type="button"
                   :class="{ active: activeDesktopCategoryId === category.id }"
                   :aria-expanded="activeDesktopCategoryId === category.id"
-                  @mouseenter="activeDesktopCategoryId = category.id"
-                  @focus="activeDesktopCategoryId = category.id"
-                  @click="activeDesktopCategoryId = category.id"
+                  @mouseenter="onMainCatEnter(category.id)"
+                  @focus="onMainCatEnter(category.id)"
+                  @click="onMainCatEnter(category.id)"
                 >
                   <span>{{ category.title }}</span>
                   <span class="category-arrow" aria-hidden="true">›</span>
                 </button>
               </div>
 
+              <!-- 第二欄：子類別 -->
               <div
-                v-if="activeDesktopCategory"
+                v-if="activeDesktopCategory && activeDesktopCategory.subGroups.length"
+                class="desktop-subcategory-list"
+              >
+                <button
+                  v-for="sub in activeDesktopCategory.subGroups"
+                  :key="sub.id"
+                  type="button"
+                  :class="{ active: activeDesktopSubCategoryId === sub.id }"
+                  @mouseenter="activeDesktopSubCategoryId = sub.id"
+                  @focus="activeDesktopSubCategoryId = sub.id"
+                  @click="activeDesktopSubCategoryId = sub.id"
+                >
+                  <span>{{ sub.name }}</span>
+                  <span v-if="sub.articles.length" class="category-arrow" aria-hidden="true">›</span>
+                </button>
+              </div>
+
+              <!-- 第三欄：文章 -->
+              <div
+                v-if="activeDesktopSubCategory && activeDesktopSubCategory.articles.length"
                 class="desktop-article-menu"
               >
-                <p>{{ activeDesktopCategory.title }}</p>
+                <p>{{ activeDesktopSubCategory.name }}</p>
                 <NuxtLink
-                  v-for="article in activeDesktopCategory.items"
+                  v-for="article in activeDesktopSubCategory.articles"
                   :key="article.id"
                   :to="article.path"
                   :class="{ 'article-active': isArticleActive(article) }"
@@ -121,6 +142,7 @@
               v-show="healthMenuOpen"
               class="tablet-health-menu"
             >
+              <!-- 母類別 accordion -->
               <section
                 v-for="category in healthCategories"
                 :key="category.id"
@@ -137,19 +159,9 @@
                   <svg
                     class="menu-arrow"
                     :class="{ rotate: activeTabletCategoryId === category.id }"
-                    width="14"
-                    height="14"
-                    viewBox="0 0 12 12"
-                    fill="none"
-                    aria-hidden="true"
+                    width="14" height="14" viewBox="0 0 12 12" fill="none" aria-hidden="true"
                   >
-                    <path
-                      d="M3 4.5L6 7.5L9 4.5"
-                      stroke="currentColor"
-                      stroke-width="1.5"
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                    />
+                    <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
                   </svg>
                 </button>
 
@@ -158,15 +170,54 @@
                   v-show="activeTabletCategoryId === category.id"
                   class="accordion-content"
                 >
+                  <!-- 直屬文章（無子類別） -->
                   <NuxtLink
-                    v-for="article in category.items"
-                    :key="article.id"
-                    :to="article.path"
-                    :class="{ 'article-active': isArticleActive(article) }"
+                    v-for="art in category.directArticles"
+                    :key="`d${art.id}`"
+                    :to="art.path"
+                    :class="{ 'article-active': isArticleActive(art) }"
                     @click="closeAll"
                   >
-                    {{ article.title }}
+                    {{ art.title }}
                   </NuxtLink>
+
+                  <!-- 子類別 accordion -->
+                  <section
+                    v-for="sub in category.subGroups"
+                    :key="sub.id"
+                    class="accordion-subcategory"
+                  >
+                    <button
+                      class="accordion-sub-trigger"
+                      type="button"
+                      :aria-expanded="activeTabletSubCategoryId === sub.id"
+                      @click="toggleTabletSubCategory(sub.id)"
+                    >
+                      <span>{{ sub.name }}</span>
+                      <svg
+                        class="menu-arrow"
+                        :class="{ rotate: activeTabletSubCategoryId === sub.id }"
+                        width="13" height="13" viewBox="0 0 12 12" fill="none" aria-hidden="true"
+                      >
+                        <path d="M3 4.5L6 7.5L9 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+                      </svg>
+                    </button>
+
+                    <div
+                      v-show="activeTabletSubCategoryId === sub.id"
+                      class="accordion-sub-content"
+                    >
+                      <NuxtLink
+                        v-for="art in sub.articles"
+                        :key="art.id"
+                        :to="art.path"
+                        :class="{ 'article-active': isArticleActive(art) }"
+                        @click="closeAll"
+                      >
+                        {{ art.title }}
+                      </NuxtLink>
+                    </div>
+                  </section>
                 </div>
               </section>
             </div>
@@ -191,6 +242,8 @@
 </template>
 
 <script>
+import { publicAPI } from '~/composables/utils/api';
+
 export default {
   name: 'AppHeader',
 
@@ -199,46 +252,11 @@ export default {
       isOpen: false,
       healthMenuOpen: false,
       activeDesktopCategoryId: null,
+      activeDesktopSubCategoryId: null,
       activeTabletCategoryId: null,
+      activeTabletSubCategoryId: null,
       originalBodyOverflow: '',
-
-      // 模擬未來 API 回傳的「分類 -> 文章」階層資料
-      healthCategories: [
-        // {
-        //   id: 'disease',
-        //   title: '疾病分享',
-        //   items: [
-        //     { id: 'joint', title: '關節活動照護', path: '/disease#joint' },
-        //     { id: 'uterus', title: '子宮蓄膿介紹', path: '/disease#uterus' },
-        //     { id: 'urinary', title: '貓咪下泌尿道疾病', path: '/disease#urinary' },
-        //     {
-        //       id: 'ivdd',
-        //       title: '椎間盤疾病 (IVDD 相關資訊)',
-        //       path: '/disease#ivdd',
-        //     },
-        //   ],
-        // },
-        // {
-        //   id: 'healthy',
-        //   title: '健康照護須知',
-        //   items: [
-        //     { id: 'surgery', title: '手術照顧小提醒', path: '/healthy#surgery' },
-        //     { id: 'oral', title: '口腔清潔照護', path: '/healthy#oral' },
-        //     { id: 'kitten-guide', title: '幼貓照護指南', path: '/healthy#kitten-guide' },
-        //     { id: 'puppy-guide', title: '幼犬照護指南', path: '/healthy#puppy-guide' },
-        //   ],
-        // },
-        // {
-        //   id: 'protection',
-        //   title: '疫苗與寄生蟲防護',
-        //   items: [
-        //     { id: 'vaccine', title: '毛孩疫苗小知識', path: '/protection#vaccine' },
-        //     { id: 'rabies', title: '狂犬病疫苗說明', path: '/protection#rabies' },
-        //     { id: 'heartworm', title: '心絲蟲防護觀念', path: '/protection#heartworm' },
-        //     { id: 'parasite', title: '體內外寄生蟲須知', path: '/protection#parasite' },
-        //   ],
-        // },
-      ],
+      healthCategories: [],
     }
   },
 
@@ -252,13 +270,13 @@ export default {
     },
 
     activeDesktopCategory() {
-      return (
-        this.healthCategories.find(
-          (category) => category.id === this.activeDesktopCategoryId,
-        ) || null
-      )
+      return this.healthCategories.find(c => c.id === this.activeDesktopCategoryId) || null
     },
 
+    activeDesktopSubCategory() {
+      if (!this.activeDesktopCategory) return null
+      return this.activeDesktopCategory.subGroups.find(s => s.id === this.activeDesktopSubCategoryId) || null
+    },
   },
 
   watch: {
@@ -271,10 +289,11 @@ export default {
     },
   },
 
-  mounted() {
+  async mounted() {
     window.addEventListener('resize', this.handleResize)
     window.addEventListener('keydown', this.handleKeydown)
     document.addEventListener('pointerdown', this.handleDocumentPointerDown)
+    await this.loadCategories()
   },
 
   beforeUnmount() {
@@ -285,6 +304,53 @@ export default {
   },
 
   methods: {
+    async loadCategories() {
+      try {
+        const cats = await publicAPI.getCategories();
+        this.healthCategories = cats.map(main => ({
+          id: main.id,
+          title: main.name,
+          code: main.code,
+          // 直屬母類別（無子類別）的文章
+          directArticles: (main.articles || []).map(art => ({
+            id: art.id,
+            title: art.title,
+            path: `/${main.code || main.id}/${art.code || art.id}`,
+          })),
+          // 子類別（含各自文章）
+          subGroups: (main.subCategories || []).map(sub => ({
+            id: sub.id,
+            name: sub.name,
+            code: sub.code,
+            articles: (sub.articles || []).map(art => ({
+              id: art.id,
+              title: art.title,
+              path: `/${main.code || main.id}/${sub.code || sub.id}/${art.code || art.id}`,
+            })),
+          })),
+        }));
+
+        // 預設展開第一個母類別及其第一個子類別
+        if (this.healthCategories.length > 0) {
+          this.activeDesktopCategoryId = this.healthCategories[0].id;
+          const firstSub = this.healthCategories[0].subGroups[0];
+          if (firstSub) this.activeDesktopSubCategoryId = firstSub.id;
+        }
+      } catch (e) {
+        console.error('載入衛教類別失敗', e);
+      }
+    },
+
+    onMainCatEnter(categoryId) {
+      this.activeDesktopCategoryId = categoryId;
+      const cat = this.healthCategories.find(c => c.id === categoryId);
+      if (cat && cat.subGroups.length > 0) {
+        this.activeDesktopSubCategoryId = cat.subGroups[0].id;
+      } else {
+        this.activeDesktopSubCategoryId = null;
+      }
+    },
+
     toggleMenu() {
       this.isOpen = !this.isOpen
       if (!this.isOpen) {
@@ -313,6 +379,7 @@ export default {
       this.isOpen = false
       this.healthMenuOpen = false
       this.activeDesktopCategoryId = null
+      this.activeDesktopSubCategoryId = null
       this.resetNestedMenus()
     },
 
@@ -325,8 +392,14 @@ export default {
       }
     },
 
+    toggleTabletSubCategory(subId) {
+      this.activeTabletSubCategoryId =
+        this.activeTabletSubCategoryId === subId ? null : subId
+    },
+
     resetNestedMenus() {
       this.activeTabletCategoryId = null
+      this.activeTabletSubCategoryId = null
     },
 
     handleResize() {
@@ -702,8 +775,9 @@ a {
     z-index: 1200;
     top: calc(100% + 14px);
     left: 50%;
-    display: block;
-    width: 250px;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
     padding: 10px;
     background: #fff;
     border: 1px solid rgba(44, 82, 130, 0.12);
@@ -721,10 +795,12 @@ a {
     content: '';
   }
 
+  /* 第一欄：母類別 */
   .desktop-category-list {
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 200px;
   }
 
   .desktop-category-list button {
@@ -760,33 +836,57 @@ a {
     line-height: 1;
   }
 
-  .desktop-article-menu {
-    position: absolute;
-    top: 0;
-    left: calc(100% + 8px);
-    width: 280px;
-    min-height: 100%;
-    padding: 14px 18px 18px;
-    background: #fff;
-    border: 1px solid rgba(44, 82, 130, 0.12);
-    border-radius: 6px;
-    box-shadow: 0 12px 34px rgba(24, 63, 95, 0.2);
+  /* 第二欄：子類別 */
+  .desktop-subcategory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 190px;
+    padding: 4px 8px;
+    margin-left: 8px;
+    border-left: 1px solid rgba(44, 82, 130, 0.12);
   }
 
-  .desktop-article-menu::before {
-    position: absolute;
-    top: 0;
-    right: 100%;
-    width: 9px;
-    height: 100%;
-    content: '';
+  .desktop-subcategory-list button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    color: #3a5f80;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+    border-radius: 4px;
+    transition: color 0.18s ease, background 0.18s ease;
+  }
+
+  .desktop-subcategory-list button:hover,
+  .desktop-subcategory-list button:focus-visible,
+  .desktop-subcategory-list button.active {
+    color: #fff;
+    background: #3a7ca5;
+    outline: none;
+  }
+
+  /* 第三欄：文章 */
+  .desktop-article-menu {
+    min-width: 260px;
+    max-width: 320px;
+    padding: 4px 8px 8px 16px;
+    margin-left: 8px;
+    border-left: 1px solid rgba(44, 82, 130, 0.12);
   }
 
   .desktop-article-menu p {
     padding: 8px 10px 12px;
     margin: 0;
     color: #2c5282;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     border-bottom: 1px solid #dbe8ed;
   }
@@ -823,6 +923,51 @@ a {
   .navbar-menu {
     width: min(90vw, 340px);
   }
+}
+
+/* ── 子類別 accordion（手機/平板） ── */
+.accordion-subcategory {
+  border-bottom: 1px solid rgba(44, 82, 130, 0.07);
+}
+
+.accordion-sub-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 10px 8px 10px 16px;
+  color: #3a5f80;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  background: #edf4f9;
+  border: 0;
+}
+
+.accordion-sub-trigger:hover,
+.accordion-sub-trigger[aria-expanded='true'] {
+  background: #d9eaf4;
+}
+
+.accordion-sub-content {
+  padding: 2px 8px 6px 24px;
+  background: #f7fafc;
+}
+
+.accordion-sub-content a {
+  display: block;
+  padding: 9px 4px;
+  color: #496b8c;
+  font-size: 13px;
+  line-height: 1.45;
+  text-decoration: none;
+}
+
+.accordion-sub-content a:hover,
+.accordion-sub-content a.article-active {
+  color: #2f83ba;
+  font-weight: 700;
 }
 
 @media (prefers-reduced-motion: reduce) {

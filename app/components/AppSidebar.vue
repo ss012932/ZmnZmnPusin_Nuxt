@@ -47,6 +47,10 @@
 
     <!-- 底部收合按鈕（桌面版） -->
     <div class="sidebar-footer" v-if="!mobileOpen">
+      <NuxtLink to="/" class="collapse-btn home-btn" title="回前台首頁">
+        <iconify-icon icon="mdi:home-outline" width="18" class="collapse-icon"></iconify-icon>
+        <span class="collapse-text" v-show="!collapsed">回前台首頁</span>
+      </NuxtLink>
       <button class="collapse-btn" @click="$emit('toggle')">
         <iconify-icon
           :icon="collapsed ? 'mdi:chevron-right' : 'mdi:chevron-left'"
@@ -226,6 +230,17 @@ export default {
 .collapse-btn:hover {
   background: rgba(255, 255, 255, 0.06);
   color: rgba(255, 255, 255, 0.75);
+}
+
+.home-btn {
+  text-decoration: none;
+  margin-bottom: 4px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.home-btn:hover {
+  color: #90cdf4;
+  background: rgba(144, 205, 244, 0.08);
 }
 
 .collapse-text {
