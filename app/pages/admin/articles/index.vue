@@ -1137,6 +1137,33 @@ export default {
 .rich-text-content-preview ul,.rich-text-content-preview ol { padding-left: 24px; margin: 12px 0; }
 .rich-text-content-preview li { margin-bottom: 6px; }
 .rich-text-content-preview blockquote { border-left: 4px solid #5aa0c8; margin: 16px 0; padding: 10px 16px; background: #f8f9ff; border-radius: 0 8px 8px 0; }
+.rich-text-content-preview .crt-callout {
+  border: 1.5px solid #fde68a;
+  background: #fefce8;
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin: 0.9em 0;
+}
+.rich-text-content-preview .crt-callout > :first-child { margin-top: 0; }
+.rich-text-content-preview .crt-callout > :last-child  { margin-bottom: 0; }
+.rich-text-content-preview .crt-callout ul {
+  list-style: none;
+  padding-left: 0.25em;
+  margin: 0.4em 0;
+}
+.rich-text-content-preview .crt-callout ul li {
+  position: relative;
+  padding-left: 1.9em;
+  margin: 0.35em 0;
+}
+.rich-text-content-preview .crt-callout ul li::before {
+  content: "✅";
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  font-size: 0.95em;
+}
+.rich-text-content-preview .highlight-red { color: #e74c3c; }
 
 @media (max-width: 960px) {
   .editor2-layout { grid-template-columns: 1fr; }

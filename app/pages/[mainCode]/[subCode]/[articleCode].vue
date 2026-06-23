@@ -31,7 +31,7 @@
         <div class="hero-blob hero-blob-b"></div>
 
         <div class="hero-wrap">
-          <!-- ── 左：文字 ── -->
+          <!-- ── 置中文字 ── -->
           <div class="hero-text">
             <nav class="breadcrumb" ref="breadcrumbEl">
               <NuxtLink to="/" class="bc-link">首頁</NuxtLink>
@@ -60,115 +60,6 @@
                 {{ article.subCategoryName }}
               </span>
             </div>
-          </div>
-
-          <!-- ── 右：互動貓咪卡片（桌面） ── -->
-          <div class="hero-visual" ref="heroVisual" @click="onCatClick">
-            <!-- 底部點陣裝飾 -->
-            <div class="card-dots"></div>
-            <!-- 類別徽章 -->
-            <div class="card-badge" v-if="article.mainCategoryName">
-              {{ article.mainCategoryName }}
-            </div>
-            <!-- 說話泡泡 -->
-            <div class="cat-bubble">
-              {{ catHappy ? '喵～謝謝你摸我 💕' : (article.subCategoryName || '摸摸我吧！') }}
-            </div>
-            <!-- 飛心特效 -->
-            <div class="hearts-wrap" v-if="catHappy" aria-hidden="true">
-              <span v-for="h in 5" :key="h" class="fly-heart" :style="{ '--hi': h }">❤️</span>
-            </div>
-            <!-- 閃光特效 -->
-            <div class="sparkle-wrap" v-if="catHappy" aria-hidden="true">
-              <span v-for="s in 4" :key="'s' + s" class="sparkle" :style="{ '--si': s }">✦</span>
-            </div>
-            <!-- 貓咪 SVG（圓臉奶貓・小獸醫） -->
-            <div class="cat-float">
-              <svg class="cat-svg" viewBox="0 0 180 210" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- 尾巴（身體後方，先畫；GSAP 以 143,162 為軸搖擺） -->
-                <g ref="catTail">
-                  <path d="M 136 170 C 166 158 180 192 158 202 C 146 207 132 200 135 189"
-                    stroke="#DEE9F5" stroke-width="17" stroke-linecap="round" />
-                </g>
-
-                <!-- 身體 -->
-                <ellipse cx="90" cy="172" rx="50" ry="36" fill="#EEF4FA" />
-                <!-- 肚肚淺色 -->
-                <ellipse cx="90" cy="182" rx="30" ry="22" fill="#F7FBFE" />
-
-                <!-- 前爪 -->
-                <ellipse cx="66" cy="200" rx="18" ry="11" fill="#DEE9F5" />
-                <ellipse cx="66" cy="199" rx="15.5" ry="9" fill="#F4F9FD" />
-                <ellipse cx="114" cy="200" rx="18" ry="11" fill="#DEE9F5" />
-                <ellipse cx="114" cy="199" rx="15.5" ry="9" fill="#F4F9FD" />
-                <!-- 肉球 -->
-                <ellipse cx="66" cy="201" rx="6" ry="3.6" fill="#FFB8C6" opacity="0.55" />
-                <ellipse cx="114" cy="201" rx="6" ry="3.6" fill="#FFB8C6" opacity="0.55" />
-
-                <!-- 頭 -->
-                <circle cx="90" cy="86" r="46" fill="#EEF4FA" />
-
-                <!-- 左耳 -->
-                <path d="M 55 64 L 59 38 L 85 57 Z" fill="#EEF4FA" />
-                <path d="M 61 59 L 63 45 L 79 56 Z" fill="#FFB8C6" />
-                <!-- 右耳 -->
-                <path d="M 125 64 L 121 38 L 95 57 Z" fill="#EEF4FA" />
-                <path d="M 119 59 L 117 45 L 101 56 Z" fill="#FFB8C6" />
-
-                <!-- 額頭小撮毛 -->
-                <path d="M 83 47 Q 90 39 97 47" fill="none" stroke="#DEE9F5" stroke-width="3" stroke-linecap="round" />
-
-                <!-- 腮紅 -->
-                <ellipse cx="60" cy="100" rx="9" ry="5.5" fill="rgba(255,150,170,0.22)" />
-                <ellipse cx="120" cy="100" rx="9" ry="5.5" fill="rgba(255,150,170,0.22)" />
-
-                <!-- 眼睛：正常（白點隨滑鼠看人） -->
-                <g v-if="!catHappy && !catBlink">
-                  <ellipse cx="74" cy="90" rx="9" ry="11.5" fill="#143c64" />
-                  <ellipse cx="106" cy="90" rx="9" ry="11.5" fill="#143c64" />
-                  <circle :cx="74 + catPupil.x" :cy="86 + catPupil.y" r="3.4" fill="#ffffff" />
-                  <circle :cx="106 + catPupil.x" :cy="86 + catPupil.y" r="3.4" fill="#ffffff" />
-                  <circle cx="71" cy="95" r="1.7" fill="rgba(255,255,255,0.55)" />
-                  <circle cx="103" cy="95" r="1.7" fill="rgba(255,255,255,0.55)" />
-                </g>
-                <!-- 眼睛：眨眼 -->
-                <g v-else-if="catBlink && !catHappy">
-                  <path d="M 66 91 Q 74 96 82 91" fill="none" stroke="#143c64" stroke-width="2.6" stroke-linecap="round" />
-                  <path d="M 98 91 Q 106 96 114 91" fill="none" stroke="#143c64" stroke-width="2.6" stroke-linecap="round" />
-                </g>
-                <!-- 眼睛：開心 ^ ^ -->
-                <g v-else>
-                  <path d="M 65 93 Q 74 82 83 93" fill="none" stroke="#143c64" stroke-width="3.2" stroke-linecap="round" />
-                  <path d="M 97 93 Q 106 82 115 93" fill="none" stroke="#143c64" stroke-width="3.2" stroke-linecap="round" />
-                </g>
-
-                <!-- 鼻子 -->
-                <path d="M 86 104 L 94 104 L 90 109 Z" fill="#FF9DB0" />
-                <!-- 嘴巴 ω -->
-                <path d="M 90 109 Q 85 115 81 112" fill="none" stroke="rgba(20,60,100,0.45)" stroke-width="1.6" stroke-linecap="round" />
-                <path d="M 90 109 Q 95 115 99 112" fill="none" stroke="rgba(20,60,100,0.45)" stroke-width="1.6" stroke-linecap="round" />
-
-                <!-- 鬍鬚左 -->
-                <line x1="26" y1="98"  x2="58" y2="102" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round" />
-                <line x1="24" y1="106" x2="58" y2="108" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round" />
-                <line x1="26" y1="114" x2="58" y2="113" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round" />
-                <!-- 鬍鬚右 -->
-                <line x1="154" y1="98"  x2="122" y2="102" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round" />
-                <line x1="156" y1="106" x2="122" y2="108" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round" />
-                <line x1="154" y1="114" x2="122" y2="113" stroke="rgba(255,255,255,0.4)" stroke-width="1.2" stroke-linecap="round" />
-
-                <!-- 聽診器（衛教主題） -->
-                <path d="M 68 126 Q 58 146 64 164 Q 69 178 86 173" stroke="#5aa0c8" stroke-width="4" stroke-linecap="round" />
-                <path d="M 112 126 Q 122 146 116 164 Q 111 178 94 173" stroke="#5aa0c8" stroke-width="4" stroke-linecap="round" />
-                <circle cx="68" cy="126" r="4.2" fill="#5aa0c8" />
-                <circle cx="112" cy="126" r="4.2" fill="#5aa0c8" />
-                <circle cx="90" cy="174" r="9" fill="#5aa0c8" />
-                <circle cx="90" cy="174" r="5.2" fill="#143c64" />
-                <circle cx="90" cy="174" r="2.4" fill="#7cc0e0" />
-              </svg>
-            </div>
-            <!-- 提示文字 -->
-            <div class="cat-hint-text">點我互動 🐾</div>
           </div>
         </div>
 
@@ -215,9 +106,9 @@
           ref="tocSidebar"
         >
           <div class="toc-card">
-            <button class="toc-close" @click="isMenuOpen = false">✕</button>
             <div class="toc-heading">
-              <span class="toc-heading-bar"></span>目次
+              <span class="toc-heading-bar"></span>目錄
+              <button class="toc-close" @click="isMenuOpen = false">✕</button>
             </div>
             <nav class="toc-nav">
               <button
@@ -375,23 +266,24 @@
   background: radial-gradient(circle, rgba(255, 217, 102, 0.07) 0%, transparent 70%);
 }
 
-/* 主容器 */
+/* 主容器（置中單欄） */
 .hero-wrap {
-  max-width: 1200px;
+  max-width: 820px;
   margin: 0 auto;
   padding: 56px 20px 56px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 48px;
+  text-align: center;
   position: relative;
   z-index: 1;
 }
 
-/* ── 左：文字 ── */
-.hero-text { flex: 1; min-width: 0; }
+/* ── 文字 ── */
+.hero-text { width: 100%; min-width: 0; }
 
 .breadcrumb {
-  display: flex; align-items: center;
+  display: flex; align-items: center; justify-content: center;
   gap: 6px; flex-wrap: wrap;
   margin-bottom: 18px;
 }
@@ -404,7 +296,7 @@
 .bc-sep   { font-size: 13px; color: #c4d8e8; }
 .bc-current { font-size: 13px; color: #143c64; font-weight: 500; }
 
-/* 標題（左對齊） */
+/* 標題（置中） */
 .hero-title {
   font-size: clamp(26px, 4vw, 42px);
   font-weight: 800;
@@ -412,7 +304,7 @@
   line-height: 1.25;
   letter-spacing: -0.02em;
   margin: 0;
-  text-align: left;
+  text-align: center;
 }
 
 /* 金色底線 */
@@ -420,19 +312,19 @@
   width: 56px; height: 4px;
   background: linear-gradient(90deg, #5aa0c8, #ffd966);
   border-radius: 2px;
-  margin: 12px 0 18px;
+  margin: 14px auto 18px;
 }
 
 .hero-summary {
   font-size: 15px;
   color: #4a6a82;
   line-height: 1.8;
-  margin: 0 0 20px;
-  max-width: 540px;
+  margin: 0 auto 20px;
+  max-width: 620px;
 }
 
 /* Meta chips */
-.hero-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.hero-meta { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 
 .meta-chip {
   display: flex; align-items: center; gap: 6px;
@@ -453,113 +345,6 @@
   font-size: 13px;
   font-weight: 500;
 }
-
-/* ── 右：互動貓咪卡片（桌面） ── */
-.hero-visual {
-  width: 360px;
-  height: 260px;
-  background: linear-gradient(155deg, #0c2543 0%, #143c64 100%);
-  border-radius: 20px;
-  overflow: hidden;
-  box-shadow:
-    0 20px 56px rgba(20, 60, 100, 0.22),
-    0 0 0 1px rgba(90, 160, 200, 0.12);
-  flex-shrink: 0;
-  position: relative;
-  display: none; /* 手機隱藏 */
-  cursor: pointer;
-  user-select: none;
-}
-
-/* 點陣背景 */
-.card-dots {
-  position: absolute; inset: 0;
-  background-image: radial-gradient(rgba(90, 160, 200, 0.14) 1px, transparent 1px);
-  background-size: 18px 18px;
-  pointer-events: none;
-}
-
-/* 類別徽章 */
-.card-badge {
-  position: absolute; top: 14px; right: 14px;
-  background: rgba(90, 160, 200, 0.22);
-  border: 1px solid rgba(90, 160, 200, 0.38);
-  color: rgba(255,255,255,0.82);
-  font-size: 11px; font-weight: 600;
-  padding: 4px 10px; border-radius: 999px;
-  letter-spacing: 0.03em;
-  pointer-events: none; z-index: 2;
-}
-
-/* 說話泡泡 */
-.cat-bubble {
-  position: absolute; top: 18px; left: 16px;
-  background: white; color: #143c64;
-  font-size: 12px; font-weight: 600;
-  padding: 6px 12px; border-radius: 10px;
-  opacity: 0;
-  transform: translateY(-4px) scale(0.92);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-  box-shadow: 0 3px 10px rgba(0,0,0,0.18);
-  pointer-events: none; white-space: nowrap; z-index: 3;
-}
-.cat-bubble::after {
-  content: '';
-  position: absolute; bottom: -7px; left: 14px;
-  border-left: 6px solid transparent;
-  border-right: 6px solid transparent;
-  border-top: 8px solid white;
-}
-.hero-visual:hover .cat-bubble {
-  opacity: 1; transform: translateY(0) scale(1);
-}
-
-/* 飛心容器 */
-.hearts-wrap {
-  position: absolute; inset: 0;
-  pointer-events: none; z-index: 4;
-}
-.fly-heart {
-  position: absolute;
-  font-size: 17px;
-  left: calc(18% + calc(var(--hi) - 1) * 14%);
-  bottom: 42%;
-  animation: flyHeart 1.4s ease-out forwards;
-  animation-delay: calc((var(--hi) - 1) * 0.12s);
-}
-@keyframes flyHeart {
-  0%   { transform: translateY(0) scale(0.5); opacity: 1; }
-  100% { transform: translateY(-75px) scale(1.1); opacity: 0; }
-}
-
-/* 貓咪浮動容器 */
-.cat-float {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  padding-bottom: 22px;
-  animation: catBob 3.2s ease-in-out infinite;
-}
-@keyframes catBob {
-  0%, 100% { transform: translateY(0); }
-  50%       { transform: translateY(-12px); }
-}
-
-/* 貓咪 SVG */
-.cat-svg {
-  width: 152px; height: auto;
-  filter: drop-shadow(0 8px 22px rgba(0,0,0,0.38));
-  transition: transform 0.25s ease;
-}
-.hero-visual:hover .cat-svg { transform: scale(1.04); }
-
-/* 提示文字 */
-.cat-hint-text {
-  position: absolute; bottom: 12px; left: 0; right: 0;
-  text-align: center; font-size: 11px;
-  color: rgba(255,255,255,0.36); letter-spacing: 0.04em;
-  transition: color 0.25s; pointer-events: none;
-}
-.hero-visual:hover .cat-hint-text { color: rgba(255,255,255,0.58); }
 
 /* Hero 底線 */
 .hero-rule {
@@ -661,6 +446,7 @@
 .toc-sidebar.mobile-open { transform: translateX(0); }
 
 .toc-card {
+  position: relative;
   background: rgba(255,255,255,0.97);
   backdrop-filter: blur(16px);
   border-radius: 16px;
@@ -669,16 +455,6 @@
   border: 1px solid #dce9f5;
   box-shadow: 0 8px 32px rgba(20, 60, 100, 0.1);
 }
-
-.toc-close {
-  position: absolute; top: 28px; right: 28px;
-  background: #f0f6fc; border: none;
-  width: 30px; height: 30px; border-radius: 50%;
-  font-size: 15px; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  color: #666; transition: all 0.2s;
-}
-.toc-close:hover { background: #dce9f5; color: #143c64; }
 
 .toc-heading {
   display: flex; align-items: center; gap: 10px;
@@ -692,6 +468,20 @@
   background: linear-gradient(to bottom, #5aa0c8, #ffd966);
   border-radius: 2px; flex-shrink: 0;
 }
+
+.toc-close {
+  margin-left: auto;
+  background: #f0f6fc; border: none;
+  width: 44px; height: 44px; border-radius: 50%;
+  font-size: 16px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: #666; transition: all 0.2s;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.toc-close:hover  { background: #dce9f5; color: #143c64; }
+.toc-close:active { background: #c8dff0; color: #143c64; }
 
 .toc-nav { display: flex; flex-direction: column; gap: 2px; }
 
@@ -819,14 +609,22 @@
 .rich-content { color: #374151; line-height: 1.85; }
 
 .rich-content :deep(p) {
-  font-size: 15px; line-height: 1.85; margin: 0 0 14px; color: #374151;
+  font-size: 15px; line-height: 1.85;
+  /* 上下都給 margin，與編輯器行為一致（瀏覽器預設 margin: 1em 0） */
+  margin: 0.9em 0;
+  color: #374151;
+}
+/* 確保空白行高度不被壓縮 */
+.rich-content :deep(p:empty),
+.rich-content :deep(p:has(> br:only-child)) {
+  min-height: 1.0em;
 }
 
 .rich-content :deep(h2) { font-size: 18px; font-weight: 700; color: #143c64; margin: 22px 0 11px; }
 .rich-content :deep(h3) { font-size: 16px; font-weight: 700; color: #1e4d87; margin: 18px 0 9px; }
 .rich-content :deep(h4) { font-size: 15px; font-weight: 600; color: #2c5a7a; margin: 14px 0 8px; }
-.rich-content :deep(strong) { font-weight: 700; color: #143c64; }
-.rich-content :deep(em)     { font-style: italic; color: #5a6c7d; }
+.rich-content :deep(strong) { font-weight: 700; }
+.rich-content :deep(em)     { font-style: italic; }
 
 .rich-content :deep(ul), .rich-content :deep(ol) {
   padding-left: 22px; margin: 12px 0;
@@ -839,16 +637,23 @@
   box-shadow: 0 4px 16px rgba(20, 60, 100, 0.1);
 }
 
-.rich-content :deep(table) {
-  width: 100%; border-collapse: collapse;
-  margin: 18px 0; font-size: 14px;
-  border-radius: 10px; overflow: hidden;
+.rich-content :deep(.table-scroll-wrap) {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin: 18px 0;
+  border-radius: 10px;
   box-shadow: 0 2px 8px rgba(20, 60, 100, 0.08);
 }
+.rich-content :deep(table) {
+  width: 100%; border-collapse: collapse;
+  margin: 0; font-size: 14px;
+  min-width: 360px;
+}
 .rich-content :deep(th) {
-  background: linear-gradient(135deg, #143c64, #1e5280);
+  background-color: #143c64;
   color: white; font-weight: 600;
-  padding: 11px 13px; text-align: left; font-size: 13px;
+  padding: 11px 13px; font-size: 13px;
+  /* text-align 不設定，保留瀏覽器預設 center，讓編輯器 inline style 可覆蓋 */
 }
 .rich-content :deep(td) {
   padding: 11px 13px; border-bottom: 1px solid #eef4f8; color: #374151;
@@ -861,7 +666,7 @@
   background: #f0f8ff;
   padding: 12px 16px; margin: 16px 0;
   border-radius: 0 10px 10px 0;
-  color: #4a6880; font-style: italic;
+  color: #4a6880;
 }
 
 .rich-content :deep(a)       { color: #5aa0c8; text-decoration: underline; text-underline-offset: 2px; }
@@ -901,6 +706,7 @@
 }
 .rich-content :deep(.prevention-title) { font-size: 14px; font-weight: 700; color: #143c64; margin: 0 0 7px; }
 
+/* notice-box：disease.vue hardcode 用 */
 .rich-content :deep(.notice-box) {
   background: linear-gradient(135deg, #fff9e0, #fffbf0);
   border: 2px solid #ffd966; border-radius: 12px;
@@ -908,6 +714,34 @@
   box-shadow: 0 2px 8px rgba(255,217,102,0.12);
 }
 .rich-content :deep(.notice-title) { color: #e74c3c; font-weight: 700; font-size: 14px; margin-bottom: 9px; }
+
+/* crt-callout：christy-richtext 編輯器實際輸出的重點框 class */
+.rich-content :deep(.crt-callout) {
+  border: 1.5px solid #fde68a;
+  background: #fefce8;
+  border-radius: 12px;
+  padding: 18px 22px;
+  margin: 0.9em 0;
+}
+.rich-content :deep(.crt-callout > :first-child) { margin-top: 0; }
+.rich-content :deep(.crt-callout > :last-child)  { margin-bottom: 0; }
+.rich-content :deep(.crt-callout ul) {
+  list-style: none;
+  padding-left: 0.25em;
+  margin: 0.4em 0;
+}
+.rich-content :deep(.crt-callout ul li) {
+  position: relative;
+  padding-left: 1.9em;
+  margin: 0.35em 0;
+}
+.rich-content :deep(.crt-callout ul li::before) {
+  content: "✅";
+  position: absolute;
+  left: 0;
+  top: 0.05em;
+  font-size: 0.95em;
+}
 
 .rich-content :deep(.vaccine-table) {
   margin: 14px 0; border-radius: 12px; overflow: hidden;
@@ -977,9 +811,6 @@
   .cover-section { padding: 0 32px; }
   .article-body  { padding: 48px 32px 80px; gap: 32px; }
 
-  /* 顯示 Three.js 卡片 */
-  .hero-visual { display: block; }
-
   /* TOC 轉為 sticky */
   .toc-sidebar {
     position: sticky;
@@ -1003,8 +834,7 @@
    桌面 1024px+
 ════════════════════════════════════ */
 @media (min-width: 1024px) {
-  .hero-wrap    { padding: 80px 40px 72px; gap: 56px; }
-  .hero-visual  { width: 400px; height: 290px; }
+  .hero-wrap    { padding: 80px 40px 72px; }
   .cover-section { padding: 0 40px; margin-top: -32px; }
   .article-body  { padding: 60px 40px 100px; gap: 40px; }
   .toc-sidebar   { width: 288px; top: 100px; }
@@ -1027,23 +857,92 @@
 
 <script>
 import _ from "lodash";
+import { computed } from "vue";
 import { publicAPI } from "~/composables/utils/api.js";
 
-export default {
+const SITE_NAME = "人人動物醫院埔心分院";
+
+// ════════════════════════════════════════════════════════
+//  defineNuxtComponent：讓 composable 在 setup() 中正確運作
+//  setup() 保持同步 → useAsyncData / useSeoMeta / useHead
+//  全部在同一個 synchronous context 內呼叫，不跨越 await 邊界
+// ════════════════════════════════════════════════════════
+export default defineNuxtComponent({
   name: "ArticleDetailPage",
 
+  setup() {
+    const route = useRoute();
+    const articleCode = String(route.params.articleCode);
+
+    // ── 1. SSR 資料抓取（不 await，取得 reactive ref） ──
+    //    Nuxt 會在 render 前等 useAsyncData 完成，server HTML 就有資料
+    const { data: articleSSR } = useAsyncData(
+      `article-${articleCode}`,
+      () => publicAPI.getArticleByCode(articleCode)
+    );
+
+    // ── 2. SEO Meta（用 getter function，data 解析後自動更新） ──
+    useSeoMeta({
+      title:              () => articleSSR.value?.title ? `${articleSSR.value.title} | ${SITE_NAME}` : SITE_NAME,
+      ogTitle:            () => articleSSR.value?.title || SITE_NAME,
+      description:        () => articleSSR.value?.summary || "",
+      ogDescription:      () => articleSSR.value?.summary || "",
+      ogImage:            () => articleSSR.value?.coverImageUrl || "",
+      ogType:             "article",
+      twitterCard:        "summary_large_image",
+      twitterTitle:       () => articleSSR.value?.title || SITE_NAME,
+      twitterDescription: () => articleSSR.value?.summary || "",
+    });
+
+    // ── 3. JSON-LD 結構化資料（computed，data 存在才注入） ──
+    useHead({
+      script: computed(() => {
+        if (!articleSSR.value) return [];
+        return [
+          {
+            key: "article-jsonld",
+            type: "application/ld+json",
+            innerHTML: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Article",
+              headline:      articleSSR.value.title,
+              description:   articleSSR.value.summary || "",
+              image:         articleSSR.value.coverImageUrl || "",
+              datePublished: articleSSR.value.publishedAt || "",
+              dateModified:  articleSSR.value.publishedAt || "",
+              author:    { "@type": "Organization", name: SITE_NAME },
+              publisher: { "@type": "Organization", name: SITE_NAME },
+            }),
+          },
+        ];
+      }),
+    });
+
+    return { articleSSR };
+  },
+
+  // ══════════════════════════════════════════════════════
+  //  Options API
+  // ══════════════════════════════════════════════════════
   data() {
+    // Vue 自動 unwrap setup() 回傳的 Ref，this.articleSSR 直接是資料物件
     return {
-      article: null,
-      loading: true,
-      isMenuOpen: false,
-      activeSection: "",
+      article:        this.articleSSR || null,
+      loading:        !this.articleSSR,
+      isMenuOpen:     false,
+      activeSection:  "",
       readingPercent: 0,
-      // 貓咪互動
-      catPupil: { x: 0, y: 0 },
-      catHappy: false,
-      catBlink: false,
     };
+  },
+
+  watch: {
+    // Client-side 路由導航時，useAsyncData 非同步更新後同步到 article
+    articleSSR(val) {
+      if (val) {
+        this.article = val;
+        this.loading = false;
+      }
+    },
   },
 
   computed: {
@@ -1056,15 +955,22 @@ export default {
   async mounted() {
     if (!import.meta.client) return;
 
-    const code = this.$route.params.articleCode;
-    await this.loadArticle(code);
-
     if (this.article) {
+      // SSR 已有資料，直接做動畫
       await this.loadScripts();
       await this.$nextTick();
-      this.initCatInteraction();
-      this.scheduleNextBlink();
+      this.wrapTables();
       this.initAnimations();
+    } else {
+      // Fallback：SSR 失敗時才 client-side fetch
+      const code = String(this.$route.params.articleCode);
+      await this.loadArticle(code);
+      if (this.article) {
+        await this.loadScripts();
+        await this.$nextTick();
+        this.wrapTables();
+        this.initAnimations();
+      }
     }
 
     window.addEventListener("scroll", this.handleScroll);
@@ -1075,14 +981,11 @@ export default {
   beforeUnmount() {
     window.removeEventListener("scroll", this.handleScroll);
     window.removeEventListener("scroll", this.updateProgress);
-    if (this._catMouseFn) document.removeEventListener("mousemove", this._catMouseFn);
-    if (this._blinkTimer) clearTimeout(this._blinkTimer);
-    if (this._catHappyTimer) clearTimeout(this._catHappyTimer);
     if (window.ScrollTrigger) window.ScrollTrigger.getAll().forEach((t) => t.kill());
   },
 
   methods: {
-    // ── 載入文章 ──
+    // ── 載入文章（僅 SSR 失敗時的 client fallback） ──
     async loadArticle(code) {
       this.loading = true;
       try {
@@ -1112,115 +1015,34 @@ export default {
       }
     },
 
-    // ── 貓咪互動 ──
-    initCatInteraction() {
-      if (window.innerWidth < 768) return;
-      this._catMouseFn = (e) => {
-        const card = this.$refs.heroVisual;
-        if (!card) return;
-        const rect = card.getBoundingClientRect();
-        const cx = rect.left + rect.width  * 0.52;
-        const cy = rect.top  + rect.height * 0.48;
-        const dx = e.clientX - cx;
-        const dy = e.clientY - cy;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        const angle = Math.atan2(dy, dx);
-        const maxOff = 3.8;
-        const factor = Math.min(1, dist / 240);
-        this.catPupil = {
-          x: Math.cos(angle) * maxOff * factor,
-          y: Math.sin(angle) * maxOff * factor,
-        };
-      };
-      document.addEventListener("mousemove", this._catMouseFn);
-    },
-
-    onCatClick() {
-      if (this.catHappy) return;
-      this.catHappy = true;
-      if (this._catHappyTimer) clearTimeout(this._catHappyTimer);
-      this._catHappyTimer = setTimeout(() => { this.catHappy = false; }, 1600);
-    },
-
-    scheduleNextBlink() {
-      const delay = 2800 + Math.random() * 3200;
-      this._blinkTimer = setTimeout(() => {
-        if (this.catHappy) { this.scheduleNextBlink(); return; }
-        this.catBlink = true;
-        setTimeout(() => {
-          this.catBlink = false;
-          this.scheduleNextBlink();
-        }, 160);
-      }, delay);
-    },
-
     // ── GSAP ──
     initAnimations() {
       if (!window.gsap) return;
       const gsap = window.gsap;
-
-      // Hero 進場（由左滑入）
       const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-
-      if (this.$refs.breadcrumbEl) {
-        tl.fromTo(this.$refs.breadcrumbEl,
-          { x: -20, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5 });
-      }
-      if (this.$refs.heroTitle) {
-        tl.fromTo(this.$refs.heroTitle,
-          { x: -32, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7 }, "-=0.25");
-      }
-      if (this.$refs.heroAccent) {
-        tl.fromTo(this.$refs.heroAccent,
-          { scaleX: 0, transformOrigin: "left" },
-          { scaleX: 1, duration: 0.5, ease: "power2.out" }, "-=0.3");
-      }
-      if (this.$refs.heroSummary) {
-        tl.fromTo(this.$refs.heroSummary,
-          { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6 }, "-=0.4");
-      }
-      if (this.$refs.heroMeta) {
-        tl.fromTo(this.$refs.heroMeta,
-          { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, "-=0.35");
-      }
-      if (this.$refs.heroVisual) {
-        tl.fromTo(this.$refs.heroVisual,
-          { x: 24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: "power2.out" }, "-=0.6");
-      }
-
-      // 貓咪尾巴搖擺
-      const tail = this.$refs.catTail;
-      if (tail) {
-        gsap.fromTo(tail,
-          { rotate: -13, svgOrigin: "143 162" },
-          { rotate: 16, svgOrigin: "143 162", duration: 1.8, yoyo: true, repeat: -1, ease: "sine.inOut" }
-        );
-      }
-
-      // 封面圖
-      if (this.$refs.coverFrame) {
+      if (this.$refs.breadcrumbEl)
+        tl.fromTo(this.$refs.breadcrumbEl, { x: -20, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5 });
+      if (this.$refs.heroTitle)
+        tl.fromTo(this.$refs.heroTitle, { x: -32, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7 }, "-=0.25");
+      if (this.$refs.heroAccent)
+        tl.fromTo(this.$refs.heroAccent, { scaleX: 0, transformOrigin: "left" }, { scaleX: 1, duration: 0.5, ease: "power2.out" }, "-=0.3");
+      if (this.$refs.heroSummary)
+        tl.fromTo(this.$refs.heroSummary, { x: -24, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6 }, "-=0.4");
+      if (this.$refs.heroMeta)
+        tl.fromTo(this.$refs.heroMeta, { y: 10, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5 }, "-=0.35");
+      if (this.$refs.coverFrame)
         gsap.fromTo(this.$refs.coverFrame,
           { y: 24, opacity: 0, scale: 0.97 },
           { y: 0, opacity: 1, scale: 1, duration: 0.85, ease: "power2.out",
             scrollTrigger: { trigger: this.$refs.coverSection, start: "top 90%" } });
-      }
-
-      // TOC（桌面）
-      if (this.$refs.tocSidebar && window.innerWidth >= 768) {
-        gsap.fromTo(this.$refs.tocSidebar,
-          { x: -18, opacity: 0 },
-          { x: 0, opacity: 1, duration: 0.7, ease: "power2.out", delay: 0.25 });
-      }
-
-      // 每個段落（時間軸 + 內容）
+      if (this.$refs.tocSidebar && window.innerWidth >= 768)
+        gsap.fromTo(this.$refs.tocSidebar, { x: -18, opacity: 0 }, { x: 0, opacity: 1, duration: 0.7, ease: "power2.out", delay: 0.25 });
       const sections = this.$refs.docSections;
       if (sections) {
         const arr = Array.isArray(sections) ? sections : [sections];
         arr.forEach((el) => {
-          gsap.fromTo(el,
-            { y: 36, opacity: 0 },
-            { y: 0, opacity: 1, duration: 0.65, ease: "power2.out",
-              scrollTrigger: { trigger: el, start: "top 88%" } });
+          gsap.fromTo(el, { y: 36, opacity: 0 }, { y: 0, opacity: 1, duration: 0.65, ease: "power2.out",
+            scrollTrigger: { trigger: el, start: "top 88%" } });
         });
       }
     },
@@ -1249,6 +1071,20 @@ export default {
       if (found !== this.activeSection) this.activeSection = found;
     }, 150),
 
+    // ── 將 rich-content 內所有表格包一層 scroll wrapper ──
+    wrapTables() {
+      const richContents = this.$el?.querySelectorAll('.rich-content');
+      richContents?.forEach(rc => {
+        rc.querySelectorAll('table').forEach(table => {
+          if (table.parentElement?.classList.contains('table-scroll-wrap')) return;
+          const wrap = document.createElement('div');
+          wrap.className = 'table-scroll-wrap';
+          table.parentNode.insertBefore(wrap, table);
+          wrap.appendChild(table);
+        });
+      });
+    },
+
     sectionId(sec) { return `section-${sec.id}`; },
 
     scrollToSection(id) {
@@ -1265,5 +1101,5 @@ export default {
       return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
     },
   },
-};
+});
 </script>
