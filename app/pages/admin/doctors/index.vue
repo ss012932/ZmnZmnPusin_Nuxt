@@ -300,7 +300,7 @@ export default {
       _croppedBlob: null,   // confirmCrop 後存放，供 handleSave 上傳用
       form: this.emptyForm(),
 
-      /* ── 圓形裁切狀態 ── */
+      /* ── 長方形裁切狀態（3:4 比例） ── */
       crop: {
         show: false,
         canvasSize: 340,
@@ -658,11 +658,14 @@ export default {
       reader.onload = (ev) => {
         const img = new Image();
         img.onload = () => {
-          const cs = this.crop.canvasSize;
+          const cs    = this.crop.canvasSize;
+          const cropW = Math.round(cs * 0.70);
+          const cropH = Math.round(cropW * 4 / 3);
           this.crop.img = img;
-          /* 初始縮放：短邊填滿 canvas，稍微放大一點有裁切空間 */
-          const minDim = Math.min(img.width, img.height);
-          this.crop.scale = (cs / minDim) * 1.15;
+          /* 初始縮放：讓圖片剛好填滿 3:4 裁切框，稍微放大一點有裁切空間 */
+          const scaleByW = cropW / img.width;
+          const scaleByH = cropH / img.height;
+          this.crop.scale = Math.max(scaleByW, scaleByH) * 1.05;
           /* 置中 */
           this.crop.x = (cs - img.width  * this.crop.scale) / 2;
           this.crop.y = (cs - img.height * this.crop.scale) / 2;
@@ -675,51 +678,66 @@ export default {
       e.target.value = '';   // 允許重複選同一檔案
     },
 
-    /* ── Canvas 繪製 ── */
+    /* ── Canvas 繪製（3:4 長方形裁切） ── */
     drawCrop() {
       const canvas = this.$refs.cropCanvas;
       if (!canvas) return;
-      const ctx   = canvas.getContext('2d');
-      const cs    = this.crop.canvasSize;
-      const r     = cs / 2 - 6;
+      const ctx = canvas.getContext('2d');
+      const cs  = this.crop.canvasSize;
       const { img, x, y, scale } = this.crop;
+
+      /* 裁切框：3:4 比例，置中於 canvas */
+      const cropW = Math.round(cs * 0.70);
+      const cropH = Math.round(cropW * 4 / 3);
+      const cropX = Math.round((cs - cropW) / 2);
+      const cropY = Math.round((cs - cropH) / 2);
 
       ctx.clearRect(0, 0, cs, cs);
 
       /* 繪製圖片 */
       ctx.drawImage(img, x, y, img.width * scale, img.height * scale);
 
-      /* 深色遮罩（圓形鏤空 → evenodd） */
+      /* 深色遮罩（長方形鏤空 → evenodd） */
       ctx.fillStyle = 'rgba(0,0,0,0.52)';
       ctx.beginPath();
       ctx.rect(0, 0, cs, cs);
-      ctx.arc(cs / 2, cs / 2, r, 0, Math.PI * 2, true);
+      ctx.rect(cropX, cropY, cropW, cropH);
       ctx.fill('evenodd');
 
-      /* 圓形引導線 */
+      /* 長方形引導線 */
       ctx.beginPath();
-      ctx.arc(cs / 2, cs / 2, r, 0, Math.PI * 2);
+      ctx.rect(cropX, cropY, cropW, cropH);
       ctx.strokeStyle = '#fff';
       ctx.lineWidth   = 2;
       ctx.stroke();
     },
 
-    /* ── 確認裁切 → base64 預覽 + Blob 供上傳 ── */
+    /* ── 確認裁切 → base64 預覽 + Blob 供上傳（3:4 長方形） ── */
     confirmCrop() {
-      const out = 260;
-      const cs  = this.crop.canvasSize;
-      const ratio = out / cs;
+      const cs    = this.crop.canvasSize;
+      const cropW = Math.round(cs * 0.70);
+      const cropH = Math.round(cropW * 4 / 3);
+      const cropX = Math.round((cs - cropW) / 2);
+      const cropY = Math.round((cs - cropH) / 2);
+
+      /* 輸出畫布為 3:4 比例（寬 390 × 高 520） */
+      const outW = 390;
+      const outH = 520;
       const canvas = document.createElement('canvas');
-      canvas.width  = out;
-      canvas.height = out;
+      canvas.width  = outW;
+      canvas.height = outH;
       const ctx = canvas.getContext('2d');
 
-      ctx.beginPath();
-      ctx.arc(out / 2, out / 2, out / 2, 0, Math.PI * 2);
-      ctx.clip();
-
       const { img, x, y, scale } = this.crop;
-      ctx.drawImage(img, x * ratio, y * ratio, img.width * scale * ratio, img.height * scale * ratio);
+      /* 把裁切框內的圖片映射到輸出畫布 */
+      const scaleOut = outW / cropW;
+      ctx.drawImage(
+        img,
+        (x - cropX) * scaleOut,
+        (y - cropY) * scaleOut,
+        img.width * scale * scaleOut,
+        img.height * scale * scaleOut,
+      );
 
       // base64 用於圓形預覽
       this.form.photo = canvas.toDataURL('image/png');
@@ -849,7 +867,7 @@ export default {
 .data-table td { padding: 12px 16px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; color: #333; }
 .data-table tbody tr:last-child td { border-bottom: none; }
 .data-table tbody tr:hover td { background: #fafafa; }
-.table-avatar { width: 38px; height: 38px; border-radius: 50%; object-fit: cover; object-position: top; }
+.table-avatar { width: 38px; height: 52px; border-radius: 6px; object-fit: cover; object-position: top; }
 .td-name { font-weight: 600; color: #1a2744; }
 .dept-badge { display: inline-block; padding: 3px 10px; background: #eef3fa; color: #2c5282; border-radius: 999px; font-size: 12px; font-weight: 600; }
 .tag-list { display: flex; flex-wrap: wrap; gap: 4px; }
@@ -932,9 +950,9 @@ export default {
 /* ── 圓形照片上傳 ── */
 .photo-circle-wrap {
   position: relative;
-  width: 160px;
+  width: 120px;
   height: 160px;
-  border-radius: 50%;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   background: #eef3fa;
@@ -979,7 +997,7 @@ export default {
   font-weight: 600;
   opacity: 0;
   transition: opacity 0.2s;
-  border-radius: 50%;
+  border-radius: 0;
 }
 .photo-circle-wrap:hover .photo-circle-overlay { opacity: 1; }
 
