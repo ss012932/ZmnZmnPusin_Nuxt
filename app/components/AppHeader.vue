@@ -317,7 +317,7 @@ export default {
             title: art.title,
             path: `/${main.code || main.id}/${art.code || art.id}`,
           })),
-          // 子類別（含各自文章）
+          // 子類別（含各自文章，過濾掉沒有文章的子類別）
           subGroups: (main.subCategories || []).map(sub => ({
             id: sub.id,
             name: sub.name,
@@ -327,7 +327,7 @@ export default {
               title: art.title,
               path: `/${main.code || main.id}/${sub.code || sub.id}/${art.code || art.id}`,
             })),
-          })),
+          })).filter(sub => sub.articles.length > 0),
         }));
 
         // 預設展開第一個母類別及其第一個子類別

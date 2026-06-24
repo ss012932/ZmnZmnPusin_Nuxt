@@ -2,8 +2,8 @@ import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { showCustom } from "~/composables/utils/alert.js";
 
 const apiClient = axios.create({
-  //baseURL: "http://localhost:7129/api",
-  baseURL: "https://zmnzmnpusin-api.zmnzmnpusin.com.tw/api",
+  baseURL: "http://localhost:7129/api",
+  //baseURL: "https://zmnzmnpusin-api.zmnzmnpusin.com.tw/api",
   withCredentials: true,
 });
 
@@ -431,6 +431,21 @@ export interface PublicArticleDetail {
   sections: PublicArticleSection[];
 }
 
+export interface PublicDoctor {
+  id: number;
+  name: string;
+  photoUrl: string | null;
+  department: string;
+  sortOrder: number;
+  titles: string | null;
+  specialties: string | null;
+  treatmentItems: string | null;
+  education: string | null;
+  experience: string | null;
+  otherExperience: string | null;
+  licenses: string | null;
+}
+
 export const publicAPI = {
   // ===== 取得所有啟用類別（母類別巢狀含子類別，子類別含文章） =====
   async getCategories(): Promise<PublicMainCategory[]> {
@@ -446,5 +461,11 @@ export const publicAPI = {
     } catch {
       return null;
     }
+  },
+
+  // ===== 取得前台醫師列表（不需登入） =====
+  async getDoctors(): Promise<PublicDoctor[]> {
+    const response = await apiClient.get('/public/doctors');
+    return response.data?.data || [];
   },
 };

@@ -161,6 +161,8 @@
 </template>
 
 <script>
+import { publicAPI } from '~/composables/utils/api';
+
 export default {
   name: 'DoctorsPage',
 
@@ -168,178 +170,61 @@ export default {
     return {
       selectedDoctor: null,
       activeFilter: 'all',
-
-      departments: [
-        { key: 'all',        label: '全部科別' },
-        { key: 'internal',   label: '內科' },
-        { key: 'surgery',    label: '外科' },
-        { key: 'cardiology', label: '心臟科' },
-        { key: 'pediatrics', label: '兒科' },
-      ],
-
-      doctors: [
-        {
-          id: 1,
-          /* 1. 醫師姓名 */
-          name: '陳建志',
-          /* 2. 醫師照片 */
-          photo: 'https://randomuser.me/api/portraits/men/32.jpg',
-          /* 3. 醫師職稱 */
-          titleTags: ['院長', '門診醫療部主任'],
-          title: '主治醫師 / 內科部主任',
-          department: '一般內科',
-          deptKey: 'internal',
-          philosophy: '醫療不只是治病，更是陪伴病患找到與疾病和平共處的方式。',
-          /* 4. 專業領域 */
-          specialties: ['糖尿病管理', '高血壓', '高血脂', '甲狀腺疾病', '肥胖症'],
-          /* 5. 擅長診療項目 */
-          treatments: [
-            '胰島素治療與血糖監測規劃',
-            '心血管風險評估與預防',
-            '荷爾蒙失調與甲狀腺疾病',
-            '慢性病整合管理',
-            '生活型態調整與衛教諮詢',
-          ],
-          /* 6. 就學／就職經歷 */
-          education: [
-            '國立台灣大學 醫學院 醫學系',
-          ],
-          workExperience: [
-            '台大醫院 內科 住院醫師',
-            '台大醫院 內分泌科 研究員',
-            '本院內科 主治醫師',
-            '本院 內科部主任（現任）',
-          ],
-          otherExperience: [
-            '台灣內分泌暨糖尿病學會 理事',
-            '衛生福利部 糖尿病照護品質評估委員',
-          ],
-          /* 7. 證照與資格 */
-          certifications: [
-            '中華民國內科專科醫師',
-            '內分泌暨糖尿病專科醫師',
-            '美國內分泌學會會員（AACE）',
-          ],
-        },
-        {
-          id: 2,
-          name: '林淑芬',
-          photo: 'https://randomuser.me/api/portraits/women/44.jpg',
-          titleTags: ['副院長', '住院照護部主任'],
-          title: '主治醫師',
-          department: '心臟科',
-          deptKey: 'cardiology',
-          philosophy: '心臟是生命的節拍器，我的工作是確保每一個節拍都準確而有力。',
-          specialties: ['心律不整', '心臟衰竭', '冠狀動脈疾病', '心臟超音波', '導管消融術'],
-          treatments: [
-            '心律不整診斷與導管消融術',
-            '心臟衰竭藥物治療與追蹤',
-            '冠狀動脈疾病評估與處置',
-            '心臟超音波判讀',
-            '心臟復健計畫規劃',
-          ],
-          education: [
-            '陽明交通大學 醫學院 醫學系',
-          ],
-          workExperience: [
-            '台北榮民總醫院 內科 住院醫師',
-            '台北榮民總醫院 心臟科 研究員',
-            '本院心臟科 主治醫師',
-            '本院 住院照護部主任（現任）',
-          ],
-          otherExperience: [
-            '台灣心律不整學會 會員',
-            '歐洲心臟學會 會員（FESC）',
-          ],
-          certifications: [
-            '中華民國心臟內科專科醫師',
-            '心律不整電氣生理學認證',
-          ],
-        },
-        {
-          id: 3,
-          name: '張偉明',
-          photo: 'https://randomuser.me/api/portraits/men/67.jpg',
-          titleTags: ['外科部副主任', '主治醫師'],
-          title: '主任醫師 / 外科部副主任',
-          department: '外科手術',
-          deptKey: 'surgery',
-          philosophy: '手術刀是工具，不是答案。真正的外科醫師，是那個知道什麼時候不該開刀的人。',
-          specialties: ['腹腔鏡手術', '疝氣修補', '大腸直腸外科', '機器人輔助手術'],
-          treatments: [
-            '腹腔鏡膽囊切除術',
-            '疝氣修補手術（腹腔鏡/達文西）',
-            '大腸直腸腫瘤切除',
-            '機器人輔助微創手術',
-            '術前評估與術後照護規劃',
-          ],
-          education: [
-            '國立成功大學 醫學院 醫學系',
-          ],
-          workExperience: [
-            '成大醫院 外科 住院醫師及總醫師',
-            'Johns Hopkins Hospital 微創外科研修（美國）',
-            '本院外科 主治醫師',
-            '本院 外科部副主任（現任）',
-          ],
-          otherExperience: [
-            'SAGES 腹腔鏡外科學會 會員',
-            '達文西機器手臂術式認證醫師',
-            '台灣外科醫學會 年度優秀外科醫師獎',
-          ],
-          certifications: [
-            '中華民國外科專科醫師',
-            '腹腔鏡手術技術認證（SAGES）',
-            '達文西機器手臂手術認證',
-          ],
-        },
-        {
-          id: 4,
-          name: '吳雅婷',
-          photo: 'https://randomuser.me/api/portraits/women/28.jpg',
-          titleTags: ['主治醫師'],
-          title: '主治醫師',
-          department: '兒科',
-          deptKey: 'pediatrics',
-          philosophy: '孩子不是縮小版的大人，他們有自己的節奏與語言。讓看診成為一件不那麼可怕的事。',
-          specialties: ['新生兒照護', '兒童氣喘', '過敏疾病', '兒童發展評估'],
-          treatments: [
-            '新生兒照護與早產兒評估',
-            '兒童氣喘與過敏疾病治療',
-            '兒童生長發展評估',
-            '疫苗接種計畫與衛教',
-            '早期療育評估與轉介',
-          ],
-          education: [
-            '台北醫學大學 醫學系',
-          ],
-          workExperience: [
-            '馬偕紀念醫院 小兒科 住院醫師',
-            '馬偕紀念醫院 新生兒科 研究員',
-            '本院兒科 主治醫師（現任）',
-          ],
-          otherExperience: [
-            '兒童發展聯合評估中心 認定醫師',
-            '台灣兒科醫學會 會員',
-            '院內家長衛教講座 定期講師',
-          ],
-          certifications: [
-            '中華民國兒科專科醫師',
-            '新生兒急救（NRP）認證',
-          ],
-        },
-      ],
+      isFetching: false,
+      doctors: [],
     };
   },
 
   computed: {
+    // 從 API 資料動態產生科別清單，與後台對齊
+    departments() {
+      const unique = [...new Set(this.doctors.map((d) => d.department).filter(Boolean))];
+      return [
+        { key: 'all', label: '全部科別' },
+        ...unique.map((dept) => ({ key: dept, label: dept })),
+      ];
+    },
     filteredDoctors() {
       if (this.activeFilter === 'all') return this.doctors;
-      return this.doctors.filter((d) => d.deptKey === this.activeFilter);
+      return this.doctors.filter((d) => d.department === this.activeFilter);
     },
   },
 
+  async mounted() {
+    await this.fetchDoctors();
+  },
+
   methods: {
+    async fetchDoctors() {
+      this.isFetching = true;
+      try {
+        const list = await publicAPI.getDoctors();
+        this.doctors = list.map((d) => this.mapDoctor(d));
+      } catch (e) {
+        console.error('載入醫師資料失敗', e);
+      } finally {
+        this.isFetching = false;
+      }
+    },
+
+    mapDoctor(d) {
+      const splitLines = (str) => str ? str.split('\n').map((s) => s.trim()).filter(Boolean) : [];
+      return {
+        id:              d.id,
+        name:            d.name,
+        photo:           d.photoUrl || 'https://randomuser.me/api/portraits/lego/1.jpg',
+        department:      d.department || '',
+        sortOrder:       d.sortOrder ?? 0,
+        titleTags:       splitLines(d.titles),
+        specialties:     splitLines(d.specialties),
+        treatments:      splitLines(d.treatmentItems),
+        education:       splitLines(d.education),
+        workExperience:  splitLines(d.experience),
+        otherExperience: splitLines(d.otherExperience),
+        certifications:  splitLines(d.licenses),
+      };
+    },
+
     openDoctor(doctor) {
       this.selectedDoctor = doctor;
       window.scrollTo({ top: 0, behavior: 'smooth' });
