@@ -223,7 +223,7 @@ export default {
       keywords:           '楊梅動物醫院, 埔心獸醫, 人人動物醫院, 桃園獸醫推薦, 狗狗看診, 貓咪健檢, 雷射治療, 蔡欣叡醫師, 陳俊憲醫師',
       ogTitle:            '人人動物醫院埔心分院',
       ogDescription:      '專業犬貓醫療團隊｜楊梅永美路動物醫院｜內外科、牙科、雷射治療、再生醫療。',
-      ogImage:            'https://www.zmnzmnpusin.com.tw/og-image.jpg',
+      ogImage:            'https://www.zmnzmnpusin.com.tw/og-image.png',
       ogUrl:              'https://www.zmnzmnpusin.com.tw/',
       ogType:             'website',
       twitterCard:        'summary_large_image',

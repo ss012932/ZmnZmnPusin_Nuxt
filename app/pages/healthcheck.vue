@@ -1244,7 +1244,7 @@ export default {
       ogDescription:    '貓咪健康檢查、狗狗健康檢查，基礎到進階套組，人人動物醫院埔心分院為您的毛孩做好全面健康管理。',
       ogType:           'website',
       ogUrl:            'https://www.zmnzmnpusin.com.tw/healthcheck',
-      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.jpg',
+      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.png',
       twitterCard:      'summary_large_image',
       twitterTitle:     '健康檢查套組｜人人動物醫院埔心分院',
       twitterDescription: '貓咪與狗狗健康檢查套組，早期發現、早期治療。',

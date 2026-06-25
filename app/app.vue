@@ -24,7 +24,7 @@ body {
 <script setup lang="ts">
 // 全站預設 SEO 設定（各頁面會覆蓋此設定）
 useHead({
-  titleTemplate: "%s | 人人動物醫院後台管理系統",
+  titleTemplate: "%s",
   htmlAttrs: {
     lang: "zh-TW",
   },
@@ -33,6 +33,6 @@ useHead({
     { name: "theme-color", content: "#C9956C" },
     { charset: "utf-8" },
   ],
-  link: [{ rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
+  link: [{ rel: "icon", type: "image/x-icon", href: "/favicon.ico" }],
 });
 </script>

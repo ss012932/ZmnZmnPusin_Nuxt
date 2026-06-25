@@ -174,7 +174,7 @@ export default {
       ogDescription:    '人人動物醫院埔心分院醫師團隊，專業分工涵蓋內外科、齒科、心臟科、骨科、雷射治療與再生醫療。',
       ogType:           'website',
       ogUrl:            'https://www.zmnzmnpusin.com.tw/doctor',
-      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.jpg',
+      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.png',
       twitterCard:      'summary_large_image',
       twitterTitle:     '醫療團隊｜人人動物醫院埔心分院',
       twitterDescription: '人人動物醫院埔心分院專業獸醫師團隊介紹。',
