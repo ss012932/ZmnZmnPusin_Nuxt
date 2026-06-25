@@ -8,7 +8,29 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
 
   // 控制 Nuxt 模組
-  modules: ['@nuxt/image'],
+  modules: ['@nuxt/image', '@nuxtjs/sitemap'],
+
+  // 網站基本資訊（sitemap / OG 共用）
+  site: {
+    url: 'https://www.zmnzmnpusin.com.tw',
+    name: '人人動物醫院埔心分院',
+  },
+
+  // Sitemap 設定
+  sitemap: {
+    // 靜態頁面
+    urls: [
+      { loc: '/',            priority: 1.0, changefreq: 'weekly'  },
+      { loc: '/disease',     priority: 0.8, changefreq: 'weekly'  },
+      { loc: '/doctor',      priority: 0.7, changefreq: 'monthly' },
+      { loc: '/healthcheck', priority: 0.7, changefreq: 'monthly' },
+      { loc: '/service',     priority: 0.6, changefreq: 'monthly' },
+    ],
+    // 動態文章頁面（從 server route 抓）
+    sources: ['/api/__sitemap__/urls'],
+    // 排除後台
+    exclude: ['/admin/**'],
+  },
 
   // 控制本機開發伺服器 HTTPS
   devServer: {

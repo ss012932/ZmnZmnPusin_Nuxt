@@ -1236,6 +1236,24 @@
 export default {
   name: 'HealthCheck',
 
+  setup() {
+    useSeoMeta({
+      title:            '健康檢查套組｜人人動物醫院埔心分院',
+      description:      '人人動物醫院埔心分院提供貓咪與狗狗多種健康檢查套組，包含基礎、進階、完整心臟評估等方案，協助早期發現疾病、守護毛孩健康。',
+      ogTitle:          '健康檢查套組｜人人動物醫院埔心分院',
+      ogDescription:    '貓咪健康檢查、狗狗健康檢查，基礎到進階套組，人人動物醫院埔心分院為您的毛孩做好全面健康管理。',
+      ogType:           'website',
+      ogUrl:            'https://www.zmnzmnpusin.com.tw/healthcheck',
+      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.jpg',
+      twitterCard:      'summary_large_image',
+      twitterTitle:     '健康檢查套組｜人人動物醫院埔心分院',
+      twitterDescription: '貓咪與狗狗健康檢查套組，早期發現、早期治療。',
+    })
+    useHead({
+      link: [{ rel: 'canonical', href: 'https://www.zmnzmnpusin.com.tw/healthcheck' }],
+    })
+  },
+
   data() {
     return {
       // 展開狀態：key 為 `${group}-${index}`

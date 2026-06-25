@@ -216,38 +216,42 @@
 export default {
   name: 'HomePage',
 
-  head() {
-    return {
-      title: '人人動物醫院埔心分院｜楊梅獸醫推薦｜犬貓內外科、牙科、雷射治療',
-      meta: [
-        { name: 'description', content: '人人動物醫院埔心分院位於桃園市楊梅區，提供專業犬貓內外科、牙科、心臟科、雷射治療與再生醫療服務，用心守護每隻毛孩的健康。' },
-        { name: 'keywords', content: '楊梅動物醫院, 埔心獸醫, 人人動物醫院, 桃園獸醫推薦, 狗狗看診, 貓咪健檢, 雷射治療, 蔡欣叡醫師, 陳俊憲醫師' },
-        { property: 'og:title', content: '人人動物醫院埔心分院' },
-        { property: 'og:description', content: '專業犬貓醫療團隊｜楊梅永美路動物醫院｜內外科、牙科、雷射治療、再生醫療。' },
-        { property: 'og:image', content: 'https://www.zmnzmnpusin.com.tw/og-image.jpg' },
-        { property: 'og:url', content: 'https://www.zmnzmnpusin.com.tw/' },
-        { property: 'og:type', content: 'website' },
-      ],
+  setup() {
+    useSeoMeta({
+      title:              '人人動物醫院埔心分院｜楊梅獸醫推薦｜犬貓內外科、牙科、雷射治療',
+      description:        '人人動物醫院埔心分院位於桃園市楊梅區，提供專業犬貓內外科、牙科、心臟科、雷射治療與再生醫療服務，用心守護每隻毛孩的健康。',
+      keywords:           '楊梅動物醫院, 埔心獸醫, 人人動物醫院, 桃園獸醫推薦, 狗狗看診, 貓咪健檢, 雷射治療, 蔡欣叡醫師, 陳俊憲醫師',
+      ogTitle:            '人人動物醫院埔心分院',
+      ogDescription:      '專業犬貓醫療團隊｜楊梅永美路動物醫院｜內外科、牙科、雷射治療、再生醫療。',
+      ogImage:            'https://www.zmnzmnpusin.com.tw/og-image.jpg',
+      ogUrl:              'https://www.zmnzmnpusin.com.tw/',
+      ogType:             'website',
+      twitterCard:        'summary_large_image',
+      twitterTitle:       '人人動物醫院埔心分院｜楊梅獸醫推薦',
+      twitterDescription: '專業犬貓內外科、牙科、心臟科、雷射治療與再生醫療，用心守護每隻毛孩的健康。',
+    })
+    useHead({
       link: [{ rel: 'canonical', href: 'https://www.zmnzmnpusin.com.tw/' }],
       script: [
         {
-          type: 'application/ld+json',
+          key:       'home-jsonld',
+          type:      'application/ld+json',
           innerHTML: JSON.stringify({
             '@context': 'https://schema.org',
-            '@type': 'VeterinaryCare',
-            name: '人人動物醫院埔心分院',
-            image: 'https://www.zmnzmnpusin.com.tw/img/Mask%20group.aa3631b4.png',
+            '@type':    'VeterinaryCare',
+            name:       '人人動物醫院埔心分院',
+            image:      'https://www.zmnzmnpusin.com.tw/img/Mask%20group.aa3631b4.png',
             address: {
-              '@type': 'PostalAddress',
-              streetAddress: '桃園市楊梅區永美路274號',
+              '@type':         'PostalAddress',
+              streetAddress:   '桃園市楊梅區永美路274號',
               addressLocality: '楊梅區',
-              addressRegion: '桃園市',
-              postalCode: '326',
-              addressCountry: 'TW',
+              addressRegion:   '桃園市',
+              postalCode:      '326',
+              addressCountry:  'TW',
             },
-            telephone: '(03) 431-5700',
-            url: 'https://www.zmnzmnpusin.com.tw/',
-            geo: { '@type': 'GeoCoordinates', latitude: 24.9109, longitude: 121.1524 },
+            telephone:    '(03) 431-5700',
+            url:          'https://www.zmnzmnpusin.com.tw/',
+            geo:          { '@type': 'GeoCoordinates', latitude: 24.9109, longitude: 121.1524 },
             openingHours: 'Mo-Su 10:00-21:00',
             sameAs: [
               'https://maps.app.goo.gl/izx33mmPc3FbmdnF9',
@@ -257,7 +261,7 @@ export default {
           }),
         },
       ],
-    }
+    })
   },
 
   data() {
