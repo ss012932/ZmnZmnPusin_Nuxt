@@ -16,8 +16,8 @@ html,
 body {
   margin: 0;
   padding: 0;
-  width: 100%; /* / 這是解決左右留白的最終手段 */
-  overflow-x: hidden;
+  width: 100%; /* 這是解決左右留白的最終手段 */
+  overflow-x: clip; /* clip 不產生新 scroll container，sticky 才能正常運作 */
 }
 </style>
 
