@@ -77,7 +77,7 @@
       <!-- ══════════════════════════════
            主體：目錄 + 連貫文件
       ══════════════════════════════ -->
-      <div class="article-body">
+      <div class="article-body" ref="articleBody">
 
         <!-- 手機版 FAB -->
         <button
@@ -98,11 +98,18 @@
           <div v-if="isMenuOpen" class="mobile-overlay" @click="isMenuOpen = false"></div>
         </transition>
 
+        <!-- ── TOC 佔位 div（fixed 時維持 flex 排版寬度） ── -->
+        <div
+          v-if="visibleSections.length > 1 && tocIsFixed"
+          class="toc-sidebar-placeholder"
+        ></div>
+
         <!-- ── TOC Sidebar ── -->
         <aside
           v-if="visibleSections.length > 1"
           class="toc-sidebar"
           :class="{ 'mobile-open': isMenuOpen }"
+          :style="tocSidebarStyle"
           ref="tocSidebar"
         >
           <div class="toc-card">
@@ -131,7 +138,7 @@
 
         <!-- ── 連貫文件 ── -->
         <main class="document-wrap" ref="documentWrap">
-          <div class="article-document">
+          <div class="article-document" ref="articleDocument">
             <div
               v-for="(sec, i) in visibleSections"
               :key="sec.id"
@@ -244,7 +251,6 @@
 ════════════════════════════════════ */
 .article-hero {
   background: #ffffff;
-  border-bottom: 1px solid #dce9f5;
   position: relative;
   overflow: hidden;
 }
@@ -310,7 +316,7 @@
 /* 金色底線 */
 .title-accent {
   width: 56px; height: 4px;
-  background: linear-gradient(90deg, #5aa0c8, #ffd966);
+  background: #5aa0c8;
   border-radius: 2px;
   margin: 14px auto 18px;
 }
@@ -349,7 +355,14 @@
 /* Hero 底線 */
 .hero-rule {
   height: 3px;
-  background: linear-gradient(90deg, transparent 0%, #5aa0c8 35%, #ffd966 65%, transparent 100%);
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #8ecae6 20%,
+    #5aa0c8 50%,
+    #8ecae6 80%,
+    transparent 100%
+  );
 }
 
 /* ════════════════════════════════════
@@ -399,7 +412,6 @@
   padding: 12px 20px;
   font-size: 14px; font-weight: 600;
   cursor: pointer;
-  box-shadow: 0 4px 20px rgba(20, 60, 100, 0.4);
   transition: all 0.25s ease;
 }
 .toc-fab:hover  { background: #1e5280; transform: translateY(-2px); }
@@ -453,7 +465,6 @@
   padding: 24px;
   margin-top: 56px;
   border: 1px solid #dce9f5;
-  box-shadow: 0 8px 32px rgba(20, 60, 100, 0.1);
 }
 
 .toc-heading {
@@ -465,7 +476,7 @@
 }
 .toc-heading-bar {
   width: 4px; height: 16px;
-  background: linear-gradient(to bottom, #5aa0c8, #ffd966);
+  background: #5aa0c8;
   border-radius: 2px; flex-shrink: 0;
 }
 
@@ -522,7 +533,7 @@
 }
 .toc-fill {
   height: 100%;
-  background: linear-gradient(90deg, #5aa0c8, #ffd966);
+  background: #5aa0c8;
   border-radius: 999px;
   transition: width 0.3s ease;
 }
@@ -810,37 +821,61 @@
   .hero-wrap     { padding: 64px 32px 64px; }
   .cover-section { padding: 0 32px; }
   .article-body  { padding: 48px 32px 80px; gap: 32px; }
-
-  /* TOC 轉為 sticky */
-  .toc-sidebar {
-    position: sticky;
-    top: 90px;
-    left: auto;
-    width: 268px;
-    height: auto;
-    max-height: calc(100vh - 110px);
-    transform: none !important;
-    overflow-y: auto;
-    padding: 0;
-    flex-shrink: 0;
-  }
-  .toc-card   { margin-top: 0; }
-  .toc-close  { display: none; }
-  .toc-fab    { display: none; }
-  .mobile-overlay { display: none; }
 }
 
 /* ════════════════════════════════════
-   桌面 1024px+
+   桌面 1024px+：TOC 轉為 sticky 常駐
 ════════════════════════════════════ */
 @media (min-width: 1024px) {
   .hero-wrap    { padding: 80px 40px 72px; }
   .cover-section { padding: 0 40px; margin-top: -32px; }
   .article-body  { padding: 60px 40px 100px; gap: 40px; }
-  .toc-sidebar   { width: 288px; top: 100px; }
+
+  /* TOC 常駐 sticky：固定在畫面上方指定位置，內容過長時由目錄自己捲動 */
+  .toc-sidebar {
+    position: sticky;
+    top: 80px;
+    left: auto;
+    width: 288px;
+    height: auto;
+    max-height: calc(100dvh - 80px);
+    transform: none !important;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 0;
+    flex-shrink: 0;
+    align-self: flex-start;
+    scrollbar-gutter: stable;
+    overscroll-behavior: contain;
+  }
+  .toc-card {
+    margin-top: 0;
+    min-height: 100%;
+    box-sizing: border-box;
+  }
+  .toc-close  { display: none; }
+  .toc-fab    { display: none; }
+  .mobile-overlay { display: none; }
+  /* fixed 模式佔位，維持 flex 排版不跑版 */
+  .toc-sidebar-placeholder {
+    width: 288px;
+    flex-shrink: 0;
+  }
+
   .article-document { padding: 48px 36px 8px; }
   .doc-body { padding: 4px 0 48px; }
   .rich-content :deep(p), .rich-content :deep(li) { font-size: 16px; }
+}
+
+/* ════════════════════════════════════
+   1280px+：Footer 有負 margin-top（波浪設計）
+   加 padding-bottom 讓 sticky TOC 剛好停在 Footer 上方
+   padding = abs(footer.marginTop) + 安全間距
+════════════════════════════════════ */
+@media (min-width: 1280px) {
+  .article-page {
+    padding-bottom: calc(clamp(90px, 8vw, 130px) + 24px);
+  }
 }
 
 /* ════════════════════════════════════
@@ -932,6 +967,9 @@ export default defineNuxtComponent({
       isMenuOpen:     false,
       activeSection:  "",
       readingPercent: 0,
+      tocDynamicMaxHeight: '',
+      tocIsFixed:     false,
+      tocFixedLeft:   0,
     };
   },
 
@@ -946,6 +984,19 @@ export default defineNuxtComponent({
   },
 
   computed: {
+    tocSidebarStyle() {
+      if (this.tocIsFixed) {
+        return {
+          position: 'fixed',
+          top: '100px',
+          left: this.tocFixedLeft + 'px',
+          width: '288px',
+          zIndex: 100,
+        }
+      }
+      return {}
+    },
+
     visibleSections() {
       if (!this.article) return [];
       return (this.article.sections || []).filter((s) => !s.isHide);
@@ -975,12 +1026,17 @@ export default defineNuxtComponent({
 
     window.addEventListener("scroll", this.handleScroll);
     window.addEventListener("scroll", this.updateProgress);
+    window.addEventListener("scroll", this.updateTocMaxHeight);
+    window.addEventListener("resize", this.updateTocMaxHeight);
     this.updateProgress();
+    this.updateTocMaxHeight();
   },
 
   beforeUnmount() {
     window.removeEventListener("scroll", this.handleScroll);
     window.removeEventListener("scroll", this.updateProgress);
+    window.removeEventListener("scroll", this.updateTocMaxHeight);
+    window.removeEventListener("resize", this.updateTocMaxHeight);
     if (window.ScrollTrigger) window.ScrollTrigger.getAll().forEach((t) => t.kill());
   },
 
@@ -1051,11 +1107,30 @@ export default defineNuxtComponent({
     updateProgress() {
       const bar = this.$refs.progressBar;
       if (!bar) return;
+
+      // 頁面頂部進度條：整頁捲動比例
       const total = document.documentElement.scrollHeight - window.innerHeight;
       const pct = total > 0 ? (window.scrollY / total) * 100 : 0;
-      const v = Math.min(100, pct);
-      bar.style.width = `${v}%`;
-      this.readingPercent = Math.round(v);
+      bar.style.width = `${Math.min(100, pct)}%`;
+
+      // TOC 進度條：以 article-document 為基準
+      // article-document 底部進入視窗時 = 100%
+      const articleDoc = this.$refs.articleDocument;
+      if (articleDoc) {
+        const docBottom = articleDoc.getBoundingClientRect().bottom;
+        if (docBottom <= window.innerHeight) {
+          this.readingPercent = 100;
+        } else {
+          const docTop    = articleDoc.getBoundingClientRect().top;
+          const docHeight = articleDoc.offsetHeight;
+          // 已捲過的比例 = 進入視窗的部分 / 總高
+          const scrolled  = Math.max(0, -docTop);
+          const readable  = Math.max(1, docHeight - window.innerHeight);
+          this.readingPercent = Math.min(100, Math.round((scrolled / readable) * 100));
+        }
+      } else {
+        this.readingPercent = Math.min(100, Math.round(pct));
+      }
     },
 
     // ── Scroll spy ──
@@ -1085,20 +1160,34 @@ export default defineNuxtComponent({
       });
     },
 
-    sectionId(sec) { return `section-${sec.id}`; },
+    // ── 產生 section id ──
+    sectionId(sec) {
+      return `sec-${sec.id}`;
+    },
 
+    // ── 捲動到指定段落 ──
     scrollToSection(id) {
       const el = document.getElementById(id);
       if (!el) return;
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      const offset = 80;
+      const top = el.getBoundingClientRect().top + window.scrollY - offset;
+      window.scrollTo({ top, behavior: 'smooth' });
       this.isMenuOpen = false;
-      this.activeSection = id;
     },
 
+    // ── 格式化日期 ──
     formatDate(dateStr) {
-      if (!dateStr) return "";
+      if (!dateStr) return '';
       const d = new Date(dateStr);
-      return `${d.getFullYear()} 年 ${d.getMonth() + 1} 月 ${d.getDate()} 日`;
+      return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+    },
+
+    // ── TOC 最大高度（手機版不作用） ──
+    updateTocMaxHeight() {
+      if (window.innerWidth < 1024) return;
+      const sidebar = this.$refs.tocSidebar;
+      if (!sidebar) return;
+      sidebar.style.maxHeight = (window.innerHeight - 80) + 'px';
     },
   },
 });

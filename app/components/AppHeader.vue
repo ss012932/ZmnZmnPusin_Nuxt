@@ -1,5 +1,5 @@
 <template>
-  <header class="navbar">
+  <header class="navbar" :style="{ backgroundColor: displayBgWhite ? '#ffffff' : '#fffaf0' }">
     <div class="navbar-logo">
       <div class="logo-circle">
         <img src="@/assets/image/Maskgroup.png" alt="Logo" />
@@ -257,10 +257,16 @@ export default {
       activeTabletSubCategoryId: null,
       originalBodyOverflow: '',
       healthCategories: [],
+      displayBgWhite: false,
+      _bgTimer: null,
     }
   },
 
   computed: {
+    isArticlePage() {
+      return !!this.$route.params.articleCode
+    },
+
     overlayVisible() {
       return this.isOpen
     },
@@ -287,9 +293,20 @@ export default {
     '$route.fullPath'() {
       this.closeAll()
     },
+
+    isArticlePage(val) {
+      clearTimeout(this._bgTimer)
+      // 進入文章頁：稍微延遲讓頁面先穩定再換色
+      // 離開文章頁：立刻還原，避免殘留白底
+      const delay = val ? 120 : 0
+      this._bgTimer = setTimeout(() => {
+        this.displayBgWhite = val
+      }, delay)
+    },
   },
 
   async mounted() {
+    this.displayBgWhite = this.isArticlePage
     window.addEventListener('resize', this.handleResize)
     window.addEventListener('keydown', this.handleKeydown)
     document.addEventListener('pointerdown', this.handleDocumentPointerDown)
@@ -445,7 +462,8 @@ a {
 }
 
 .navbar {
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 1000;
   display: flex;
   align-items: center;
@@ -453,7 +471,7 @@ a {
   gap: 20px;
   width: 100%;
   padding: clamp(8px, 1.2vw, 16px) clamp(16px, 3vw, 36px);
-  background-color: #fffaf0;
+  transition: background-color 0.6s ease-in-out;
   border-bottom: 1px solid rgba(0, 0, 0, 0.1);
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
