@@ -10,26 +10,14 @@
       <form class="login-form" @submit.prevent="handleLogin">
         <div class="form-group" :class="{ error: errors.account }">
           <label class="form-label">信箱</label>
-          <input
-            class="form-input"
-            type="text"
-            v-model="form.account"
-            placeholder="請輸入信箱"
-            autocomplete="username"
-          />
+          <input class="form-input" type="text" v-model="form.account" placeholder="請輸入信箱" autocomplete="username" />
           <span class="form-error" v-if="errors.account">{{ errors.account }}</span>
         </div>
 
         <div class="form-group" :class="{ error: errors.password }">
           <label class="form-label">密碼</label>
           <div class="input-wrap">
-            <input
-              class="form-input"
-              :type="showPassword ? 'text' : 'password'"
-              v-model="form.password"
-              placeholder="請輸入密碼"
-              autocomplete="current-password"
-            />
+            <input class="form-input" :type="showPassword ? 'text' : 'password'" v-model="form.password" placeholder="請輸入密碼" autocomplete="current-password" />
             <button type="button" class="toggle-pw" @click="showPassword = !showPassword">
               {{ showPassword ? '隱藏' : '顯示' }}
             </button>
@@ -97,9 +85,11 @@ export default {
         });
 
         const auth = useBackofficeAuth();
+        // 這段控制「重新登入後解除前端已登出旗標」。
+        auth.markLoggedIn();
         await auth.check(true);
 
-        await navigateTo(this.$route.query.redirect || '/admin/doctors');
+        await navigateTo(this.$route.query.redirect || '/admin/doctors', { replace: true });
       } catch (error) {
         const responseData = error?.response?.data;
         this.loginError =
@@ -135,129 +125,22 @@ export default {
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
 }
 
-/* ── Logo ── */
-.login-logo {
-  text-align: center;
-  margin-bottom: 32px;
-}
-
-.logo-img {
-  width: 64px;
-  height: 64px;
-  object-fit: contain;
-  border-radius: 12px;
-  margin: 0 auto 16px;
-  display: block;
-}
-
-.login-title {
-  font-size: 20px;
-  font-weight: 700;
-  color: #1a2744;
-  margin-bottom: 4px;
-}
-
-.login-subtitle {
-  font-size: 13px;
-  color: #aaa;
-}
-
-/* ── Form ── */
-.login-form {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.form-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: #444;
-}
-
-.form-input {
-  width: 100%;
-  padding: 10px 14px;
-  border: 1.5px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: inherit;
-  color: #2b2b2b;
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-.form-input:focus {
-  border-color: #2c5282;
-}
-
-.form-group.error .form-input {
-  border-color: #e53e3e;
-}
-
-.form-error {
-  font-size: 12px;
-  color: #e53e3e;
-}
-
-.input-wrap {
-  position: relative;
-}
-
-.input-wrap .form-input {
-  padding-right: 56px;
-}
-
-.toggle-pw {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 12px;
-  color: #888;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.form-alert {
-  background: #fff5f5;
-  border: 1px solid #fed7d7;
-  border-radius: 8px;
-  padding: 10px 14px;
-  font-size: 13px;
-  color: #e53e3e;
-  text-align: center;
-}
-
-.login-btn {
-  width: 100%;
-  padding: 12px;
-  background: #2c5282;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 15px;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: background 0.2s;
-  margin-top: 4px;
-}
-
-.login-btn:hover:not(:disabled) {
-  background: #1a3a5c;
-}
-
-.login-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
+.login-logo { text-align: center; margin-bottom: 32px; }
+.logo-img { width: 64px; height: 64px; object-fit: contain; border-radius: 12px; margin: 0 auto 16px; display: block; }
+.login-title { font-size: 20px; font-weight: 700; color: #1a2744; margin-bottom: 4px; }
+.login-subtitle { font-size: 13px; color: #aaa; }
+.login-form { display: flex; flex-direction: column; gap: 20px; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 13px; font-weight: 600; color: #444; }
+.form-input { width: 100%; padding: 10px 14px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; color: #2b2b2b; outline: none; transition: border-color 0.2s; }
+.form-input:focus { border-color: #2c5282; }
+.form-group.error .form-input { border-color: #e53e3e; }
+.form-error { font-size: 12px; color: #e53e3e; }
+.input-wrap { position: relative; }
+.input-wrap .form-input { padding-right: 56px; }
+.toggle-pw { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 12px; color: #888; cursor: pointer; font-family: inherit; }
+.form-alert { background: #fff5f5; border: 1px solid #fed7d7; border-radius: 8px; padding: 10px 14px; font-size: 13px; color: #e53e3e; text-align: center; }
+.login-btn { width: 100%; padding: 12px; background: #2c5282; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; font-family: inherit; cursor: pointer; transition: background 0.2s; margin-top: 4px; }
+.login-btn:hover:not(:disabled) { background: #1a3a5c; }
+.login-btn:disabled { opacity: 0.65; cursor: not-allowed; }
 </style>
