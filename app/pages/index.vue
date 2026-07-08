@@ -2,7 +2,7 @@
   <div>
     <!-- Hero 區塊 -->
 <section class="hero">
-  <div class="hero-container">
+  <div class="hero-container fade-in-item">
     <!-- 左側圖片區 -->
     <div class="hero-image">
       <img src="@/assets/image/Group-75.webp" alt="Dog and Cat" />
@@ -21,12 +21,12 @@
 
     <!-- 診所簡介區塊 -->
     <section class="intro">
-      <div class="intro-title">
+      <div class="intro-title fade-in-item fade-in-delay-1">
         <h2>診所簡介</h2>
         <img src="@/assets/image/Objects.webp" alt="icon" />
       </div>
 
-      <div class="intro-content">
+      <div class="intro-content fade-in-item fade-in-delay-1">
         <div class="intro-left">
           <div class="intro-item">
             <img src="@/assets/image/Vector.webp" alt="icon" />
@@ -67,12 +67,12 @@
     <!-- 飼主反饋 + 常見問題 區塊 -->
 <section class="feedback-faq">
 
-  <div class="section-title">
+  <div class="section-title fade-in-item fade-in-delay-1">
     <img src="@/assets/image/Objects (1).webp" alt="icon" />
     <h2>飼主反饋</h2>
   </div>
 
-  <section class="feedback">
+  <section class="feedback fade-in-item fade-in-delay-2">
     <div class="feedback-layout">
 
       <!-- 左側：圖片 + 評分摘要 -->
@@ -191,12 +191,12 @@
   </Transition>
 
   <!-- 常見問題 -->
-  <div class="section-title faq-title">
+  <div class="section-title faq-title fade-in-item fade-in-delay-2">
     <h3>常見問題</h3>
     <img src="@/assets/image/Objects (1).webp" alt="icon" />
   </div>
 
-  <div class="faq-content">
+  <div class="faq-content fade-in-item fade-in-delay-2">
     <div class="faq-item" v-for="(faq, i) in faqs" :key="i">
       <button class="faq-question" @click="toggleFaq(i)">
         {{ faq.question }}
@@ -462,6 +462,39 @@ export default {
 </script>
 
 <style scoped>
+/* =============================================
+   物件淡入動畫
+   說明：只讓頁面內的主要物件淡入，不套在整個頁面，避免 Header 或背景跟著閃動。
+   ============================================= */
+.fade-in-item {
+  animation: objectFadeIn 0.32s ease-out both;
+  will-change: opacity;
+}
+
+.fade-in-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.fade-in-delay-2 {
+  animation-delay: 0.16s;
+}
+
+@keyframes objectFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 使用者若設定減少動態效果，就停用動畫，避免造成不適。 */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-item {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
   font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;

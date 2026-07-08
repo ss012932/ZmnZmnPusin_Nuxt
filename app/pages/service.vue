@@ -2,11 +2,11 @@
   <div>
     <!-- ===== 服務項目區塊 ===== -->
     <div class="service-page">
-      <div class="service-header">
+      <div class="service-header fade-in-item">
         <img src="@/assets/image/Group 77.webp" alt="服務項目" />
       </div>
 
-      <section class="service-grid">
+      <section class="service-grid fade-in-item fade-in-delay-1">
         <!-- 左欄 -->
         <div class="col col-left">
           <div class="service-item">
@@ -123,12 +123,12 @@
 
     <!-- ===== 就診資訊區塊 ===== -->
     <section class="info-section">
-      <div class="info-header">
+      <div class="info-header fade-in-item fade-in-delay-1">
         <img src="@/assets/image/Group 83.webp" alt="就診資訊" />
       </div>
-      <hr class="divider" />
+      <hr class="divider fade-in-item fade-in-delay-1" />
 
-      <div class="info-grid">
+      <div class="info-grid fade-in-item fade-in-delay-2">
         <!-- 左：診所資訊 -->
         <div class="clinic-info">
           <h3>診所資訊</h3>
@@ -289,6 +289,39 @@ export default {
 </script>
 
 <style scoped>
+/* =============================================
+   物件淡入動畫
+   說明：只讓頁面內的主要物件淡入，不套在整個頁面，避免 Header 或背景跟著閃動。
+   ============================================= */
+.fade-in-item {
+  animation: objectFadeIn 0.32s ease-out both;
+  will-change: opacity;
+}
+
+.fade-in-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.fade-in-delay-2 {
+  animation-delay: 0.16s;
+}
+
+@keyframes objectFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 使用者若設定減少動態效果，就停用動畫，避免造成不適。 */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-item {
+    animation: none;
+  }
+}
+
 
 /* =============================================
    服務項目區塊

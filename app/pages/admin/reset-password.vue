@@ -4,7 +4,7 @@
 
       <!-- Logo -->
       <div class="rp-logo">
-        <img src="/Mask group.webp" alt="人人動物醫院" class="logo-img" />
+        <img src="@/assets/image/Maskgroup.webp" alt="人人動物醫院" class="logo-img" />
         <h1 class="rp-title">重設密碼</h1>
         <p class="rp-subtitle">人人動物醫院埔心分院</p>
       </div>

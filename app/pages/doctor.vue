@@ -2,12 +2,12 @@
   <div class="doctors-page">
     <!-- ════ 總覽頁 ════ -->
     <transition name="page-fade">
-      <div v-if="!selectedDoctor" class="overview-wrap">
+      <div v-if="!selectedDoctor && !hasDoctorDetailQuery" class="overview-wrap">
         <!-- 頁面主視覺：參考圖片上方的深色橫幅與麵包屑排版，色系改用網站的藍色系 -->
         <section class="team-hero" aria-labelledby="doctor-page-title">
           <div class="team-hero-overlay"></div>
 
-          <div class="team-hero-content">
+          <div class="team-hero-content fade-in-item">
             <p class="hero-eyebrow">Medical Team</p>
             <h1 id="doctor-page-title" class="hero-title">醫療團隊</h1>
           </div>
@@ -15,13 +15,13 @@
 
         <main class="overview-section">
           <!-- 頁面說明：維持網站語氣，讓使用者知道此頁用途 -->
-          <header class="team-intro">
+          <header class="team-intro fade-in-item fade-in-delay-1">
             <h2>認識我們的醫師</h2>
             <p>每一位醫師都承載著對醫療的熱忱與對病患的承諾。</p>
           </header>
 
           <!-- 科別篩選區：桌機使用膠囊按鈕；中、小尺寸改為下拉選單，避免科別變多時頁面被撐高 -->
-          <section class="filter-shell" aria-label="醫師科別篩選">
+          <section class="filter-shell fade-in-item fade-in-delay-1" aria-label="醫師科別篩選">
             <div class="filter-card">
               <!-- 桌機版：科別按鈕可全部攤開，視覺直覺、操作快速 -->
               <div class="filter-bar filter-desktop" role="group" aria-label="選擇醫師科別">
@@ -63,12 +63,18 @@
           </section>
 
           <!-- 載入中提示：避免 API 還沒回來時畫面空白 -->
-          <div v-if="isFetching" class="state-card" role="status">
-            醫師資料載入中，請稍候…
+          <div
+            v-if="isFetching"
+            class="loading-card"
+            role="status"
+            aria-live="polite"
+            aria-label="醫師資料載入中"
+          >
+            <span class="loading-spinner" aria-hidden="true"></span>
           </div>
 
           <!-- 醫師卡片列表：改成參考圖的直式人像卡片，姓名直接壓在圖片左下角 -->
-          <div v-else-if="filteredDoctors.length" class="doctors-grid">
+          <div v-else-if="filteredDoctors.length" class="doctors-grid fade-in-item fade-in-delay-2">
             <article
               v-for="doctor in filteredDoctors"
               :key="doctor.id"
@@ -106,12 +112,29 @@
       </div>
     </transition>
 
+    <!-- ════ 詳情頁載入中 ════ -->
+    <transition name="page-fade">
+      <div
+        v-if="!selectedDoctor && hasDoctorDetailQuery"
+        class="detail-section detail-loading-section"
+      >
+        <div
+          class="loading-card"
+          role="status"
+          aria-live="polite"
+          aria-label="醫師資料載入中"
+        >
+          <span class="loading-spinner" aria-hidden="true"></span>
+        </div>
+      </div>
+    </transition>
+
     <!-- ════ 詳情頁 ════ -->
     <transition name="page-fade">
       <div v-if="selectedDoctor" class="detail-section">
         <button class="back-btn" @click="closeDoctor">← 返回醫師列表</button>
 
-        <div class="detail-layout">
+        <div class="detail-layout fade-in-item">
           <!-- 左側：照片 + 基本資料 -->
           <aside class="detail-sidebar">
             <div class="sidebar-photo-wrap">
@@ -220,6 +243,53 @@
 <script>
 import { publicAPI } from '~/composables/utils/api';
 
+// ===== 醫師資料快取設定 =====
+// 說明：醫師資料屬於低頻率變動資料，先快取在瀏覽器中，返回醫師頁時可以立即顯示。
+const DOCTOR_CACHE_KEY = 'public-doctors-cache-v1';
+const DOCTOR_CACHE_TTL = 10 * 60 * 1000;
+
+// ===== 從 localStorage 讀取快取 =====
+// 說明：只在瀏覽器端執行，避免 Nuxt SSR 階段讀取 window / localStorage 出錯。
+function readDoctorCache() {
+  if (!import.meta.client) return null;
+
+  try {
+    const rawCache = localStorage.getItem(DOCTOR_CACHE_KEY);
+    if (!rawCache) return null;
+
+    const cache = JSON.parse(rawCache);
+    const isExpired = Date.now() - cache.cachedAt > DOCTOR_CACHE_TTL;
+
+    if (isExpired || !Array.isArray(cache.data)) {
+      localStorage.removeItem(DOCTOR_CACHE_KEY);
+      return null;
+    }
+
+    return cache.data;
+  } catch {
+    localStorage.removeItem(DOCTOR_CACHE_KEY);
+    return null;
+  }
+}
+
+// ===== 寫入 localStorage 快取 =====
+// 說明：API 成功回傳後更新快取，讓使用者下次進醫師頁可以更快看到資料。
+function writeDoctorCache(data) {
+  if (!import.meta.client) return;
+
+  try {
+    localStorage.setItem(
+      DOCTOR_CACHE_KEY,
+      JSON.stringify({
+        cachedAt: Date.now(),
+        data,
+      }),
+    );
+  } catch {
+    // localStorage 可能因隱私模式或容量限制失敗，失敗時不影響頁面正常載入。
+  }
+}
+
 export default {
   name: 'DoctorsPage',
 
@@ -246,7 +316,7 @@ export default {
     return {
       selectedDoctor: null,
       activeFilter: 'all',
-      isFetching: false,
+      isFetching: true,
       doctors: [],
     };
   },
@@ -287,26 +357,95 @@ export default {
       if (this.activeFilter === 'all') return this.doctors;
       return this.doctors.filter((doctor) => doctor.department === this.activeFilter);
     },
+
+    // 判斷目前網址是否是醫師詳情頁，例如 /doctor?doctor=3。
+    // 有 doctor query 時，不先渲染總覽頁，避免重整時畫面跳來跳去。
+    hasDoctorDetailQuery() {
+      const queryValue = this.$route.query.doctor;
+      const id = Array.isArray(queryValue) ? queryValue[0] : queryValue;
+      const parsedId = Number(id);
+
+      return Number.isFinite(parsedId) && parsedId > 0;
+    },
   },
 
   async mounted() {
+    // 詳情頁重整時關閉瀏覽器自動還原舊捲動位置，避免畫面先出現在下方再跳回上方。
+    if (import.meta.client && this.hasDoctorDetailQuery) {
+      window.history.scrollRestoration = 'manual';
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    // 先讀取快取資料，讓使用者再次進入醫師頁時可以立即看到卡片。
+    const cachedDoctors = readDoctorCache();
+
+    if (cachedDoctors?.length) {
+      this.doctors = cachedDoctors
+        .map((doctor) => this.mapDoctor(doctor))
+        .sort((a, b) => a.sortOrder - b.sortOrder);
+      this.isFetching = false;
+      this.applyDoctorFromUrl();
+
+      // 有快取時不顯示載入文字，改成背景同步最新資料。
+      this.fetchDoctors({ silent: true });
+      return;
+    }
+
+    // 沒有快取時才顯示載入狀態，通常只會發生在第一次進入醫師頁。
     await this.fetchDoctors();
   },
 
   methods: {
+    // 從網址讀取目前醫師 id，例如 /doctor?doctor=3
+    getDoctorIdFromUrl() {
+      if (!import.meta.client) return null;
+
+      const id = Number(new URLSearchParams(window.location.search).get('doctor'));
+      return Number.isFinite(id) && id > 0 ? id : null;
+    },
+
+    // 依照網址上的 doctor id 還原醫師詳情頁，避免重整後回到總覽頁。
+    applyDoctorFromUrl() {
+      const doctorId = this.getDoctorIdFromUrl();
+
+      if (!doctorId) {
+        this.selectedDoctor = null;
+        return;
+      }
+
+      if (!this.doctors.length) return;
+
+      const matchedDoctor = this.doctors.find((doctor) => Number(doctor.id) === doctorId);
+      if (!matchedDoctor) return;
+
+      this.selectedDoctor = matchedDoctor;
+    },
+
     // 從公開 API 取得醫師資料
-    async fetchDoctors() {
-      this.isFetching = true;
+    async fetchDoctors(options = {}) {
+      const shouldShowLoading = !options.silent;
+
+      if (shouldShowLoading) {
+        this.isFetching = true;
+      }
 
       try {
         const list = await publicAPI.getDoctors();
+
+        // API 成功後保存原始 DTO，避免下次讀快取時資料格式不一致。
+        writeDoctorCache(list);
+
         this.doctors = list
           .map((doctor) => this.mapDoctor(doctor))
           .sort((a, b) => a.sortOrder - b.sortOrder);
+
+        this.applyDoctorFromUrl();
       } catch (error) {
         console.error('載入醫師資料失敗', error);
       } finally {
-        this.isFetching = false;
+        if (shouldShowLoading) {
+          this.isFetching = false;
+        }
       }
     },
 
@@ -339,12 +478,32 @@ export default {
     // 開啟醫師詳情
     openDoctor(doctor) {
       this.selectedDoctor = doctor;
+
+      // 將醫師 id 寫進網址，重整後可回到同一位醫師詳情。
+      this.$router.replace({
+        path: this.$route.path,
+        query: {
+          ...this.$route.query,
+          doctor: doctor.id,
+        },
+      });
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
 
     // 返回醫師列表
     closeDoctor() {
       this.selectedDoctor = null;
+
+      // 移除網址上的 doctor id，避免返回列表後重整又打開同一位醫師。
+      const nextQuery = { ...this.$route.query };
+      delete nextQuery.doctor;
+
+      this.$router.replace({
+        path: this.$route.path,
+        query: nextQuery,
+      });
+
       window.scrollTo({ top: 0, behavior: 'smooth' });
     },
   },
@@ -352,6 +511,40 @@ export default {
 </script>
 
 <style scoped>
+/* =============================================
+   物件淡入動畫
+   說明：只讓頁面內的主要物件淡入，不套在整個頁面，避免 Header 或背景跟著閃動。
+   ============================================= */
+.fade-in-item {
+  animation: objectFadeIn 0.32s ease-out both;
+  will-change: opacity;
+}
+
+.fade-in-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.fade-in-delay-2 {
+  animation-delay: 0.16s;
+}
+
+@keyframes objectFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 使用者若設定減少動態效果，就停用動畫，避免造成不適。 */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-item,
+  .loading-spinner {
+    animation: none;
+  }
+}
+
 /* ─── Reset & Base：只作用在醫師頁，避免影響其他頁 ─── */
 .doctors-page,
 .doctors-page * {
@@ -705,6 +898,33 @@ export default {
   box-shadow: 0 10px 26px rgba(19, 59, 99, 0.08);
 }
 
+/* 醫師資料 loading 圓圈：資料尚未確認前顯示，避免先誤判成沒有資料。 */
+.loading-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}
+
+.loading-spinner {
+  display: inline-block;
+  width: 46px;
+  height: 46px;
+  border: 4px solid rgba(44, 82, 130, 0.16);
+  border-top-color: var(--color-primary);
+  border-radius: 50%;
+  animation: doctorLoadingSpin 0.8s linear infinite;
+}
+
+@keyframes doctorLoadingSpin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* ════════════════════════
    醫師卡片：參考圖片的直式人像卡片排版
 ════════════════════════ */
@@ -888,7 +1108,6 @@ export default {
 
 .sidebar-name-block {
   padding: 22px 0 20px;
-  border-bottom: 1px solid var(--color-sky-soft);
 }
 
 .sidebar-name {
@@ -909,7 +1128,6 @@ export default {
 
 .sidebar-section {
   padding: 18px 0;
-  border-bottom: 1px solid var(--color-sky-soft);
 }
 
 .sidebar-section-title {
@@ -1141,10 +1359,16 @@ export default {
 
   .sidebar-name-block {
     padding: 0 0 16px;
+    text-align: center;
   }
 
   .sidebar-section {
     padding: 0 0 16px;
+    text-align: center;
+  }
+
+  .title-tags {
+    justify-content: center;
   }
 
   .detail-main {
@@ -1217,8 +1441,10 @@ export default {
   }
 
   .back-btn {
-    justify-content: center;
-    width: 100%;
+    justify-content: flex-start;
+    width: fit-content;
+    max-width: 100%;
+    margin-right: auto;
     margin-bottom: 24px;
   }
 
@@ -1238,7 +1464,9 @@ export default {
   }
 
   .sidebar-name-block {
+    width: min(100%, 320px);
     padding: 18px 0;
+    margin: 0 auto;
     text-align: center;
   }
 
@@ -1247,7 +1475,10 @@ export default {
   }
 
   .sidebar-section {
+    width: min(100%, 320px);
     padding: 16px 0;
+    margin: 0 auto;
+    text-align: center;
   }
 
   .title-tags,
