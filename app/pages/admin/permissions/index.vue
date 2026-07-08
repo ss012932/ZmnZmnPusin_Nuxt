@@ -2,15 +2,17 @@
   <div class="perm-admin">
 
     <!-- 頁首 -->
-    <div class="page-header">
-      <div>
-        <h2 class="page-title">權限管理</h2>
+    <div class="page-header permission-page-header">
+      <div class="permission-title-block">
+        <div class="permission-title-row">
+          <h2 class="page-title">權限管理</h2>
+          <button class="btn btn-primary btn-title-action" @click="openCreate">
+            <iconify-icon icon="mdi:account-plus-outline" width="18"></iconify-icon>
+            新增員工
+          </button>
+        </div>
         <p class="page-desc">管理後台員工帳號與存取權限</p>
       </div>
-      <button class="btn btn-primary" @click="openCreate">
-        <iconify-icon icon="mdi:account-plus-outline" width="18"></iconify-icon>
-        新增員工
-      </button>
     </div>
 
     <!-- 統計卡片 -->
@@ -54,7 +56,7 @@
     </div>
 
     <!-- 表格 -->
-    <div class="table-wrap">
+    <div class="table-wrap desktop-table-wrap">
       <table class="data-table">
         <thead>
           <tr>
@@ -123,6 +125,71 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 手機版員工卡片列表：不用 table，避免 min-width 造成左右滑動 -->
+    <div class="mobile-admin-list">
+      <div v-if="loading" class="mobile-state-card">資料載入中...</div>
+      <div v-else-if="filteredAdmins.length === 0" class="mobile-state-card">目前沒有符合條件的員工</div>
+
+      <article v-for="admin in filteredAdmins" v-else :key="`mobile-admin-${admin.id}`" class="mobile-admin-card">
+        <div class="mobile-admin-head">
+          <div class="admin-avatar">{{ admin.name.slice(0, 1) }}</div>
+          <div class="mobile-admin-main">
+            <div class="mobile-admin-name">{{ admin.name }}</div>
+            <div class="mobile-admin-email">{{ admin.email }}</div>
+          </div>
+        </div>
+
+        <div class="mobile-admin-row">
+          <div class="mobile-admin-label">權限</div>
+          <div class="mobile-admin-value">
+            <span class="role-badge" :class="{ admin: admin.isAdmin }">
+              {{ admin.isAdmin ? '管理員' : '一般員工' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="mobile-admin-row">
+          <div class="mobile-admin-label">狀態</div>
+          <div class="mobile-admin-value">
+            <span class="status-badge" :class="admin.status">
+              {{ admin.status === 'active' ? '啟用中' : '已停用' }}
+            </span>
+          </div>
+        </div>
+
+        <div class="mobile-admin-row">
+          <div class="mobile-admin-label">建立時間</div>
+          <div class="mobile-admin-value mobile-admin-date">
+            <div>{{ admin.createdAt }}</div>
+            <div class="td-by" v-if="admin.createdBy !== '-'">{{ admin.createdBy }}</div>
+          </div>
+        </div>
+
+        <div class="mobile-admin-row">
+          <div class="mobile-admin-label">更新時間</div>
+          <div class="mobile-admin-value mobile-admin-date">
+            <div>{{ admin.updatedAt }}</div>
+            <div class="td-by" v-if="admin.updatedBy !== '-'">{{ admin.updatedBy }}</div>
+          </div>
+        </div>
+
+        <div class="mobile-admin-actions">
+          <button class="btn-action btn-edit" @click="openEdit(admin)" title="編輯">
+            <iconify-icon icon="mdi:pencil-outline" width="14"></iconify-icon>
+            編輯
+          </button>
+          <button class="btn-action btn-send" @click="sendResetEmail(admin)" title="寄送重置密碼信">
+            <iconify-icon icon="mdi:email-lock-outline" width="14"></iconify-icon>
+            重置密碼
+          </button>
+          <button class="btn-action btn-delete" @click="confirmDelete(admin)" title="刪除">
+            <iconify-icon icon="mdi:trash-can-outline" width="14"></iconify-icon>
+            刪除
+          </button>
+        </div>
+      </article>
     </div>
 
     <!-- ══ 新增/編輯 Modal ══ -->
@@ -509,6 +576,32 @@ export default {
 </script>
 
 <style>
+/* ── 頁首 ── */
+.permission-page-header {
+  align-items: flex-start;
+}
+.permission-title-block {
+  min-width: 0;
+  width: 100%;
+}
+.permission-title-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+.permission-title-row .page-title {
+  margin-bottom: 0;
+  min-width: 0;
+}
+.btn-title-action {
+  padding: 7px 14px;
+  min-height: 36px;
+}
+.desktop-table-wrap { display: block; }
+.mobile-admin-list { display: none; }
+
 /* ── 統計卡片 ── */
 .stat-cards {
   display: grid;
@@ -708,19 +801,218 @@ export default {
 /* ── RWD ── */
 @media (max-width: 900px) {
   .stat-cards {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 640px) {
-  .stat-cards {
-    grid-template-columns: 1fr;
+@media (max-width: 760px) {
+  .perm-admin {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
   }
+
+  /* 手機版標題列：新增員工在標題右邊 */
+  .permission-page-header {
+    display: block;
+    margin-bottom: 18px;
+  }
+  .permission-title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .permission-title-row .page-title {
+    min-width: 0;
+    font-size: 22px;
+  }
+  .btn-title-action {
+    width: auto;
+    min-height: 36px;
+    padding: 7px 12px;
+    flex-shrink: 0;
+  }
+
+  /* 手機版統計卡片：三個橫向一排 */
+  .stat-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+  .stat-card {
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 12px 6px;
+    text-align: center;
+  }
+  .stat-icon {
+    width: 22px;
+  }
+  .stat-num {
+    font-size: 22px;
+  }
+  .stat-label {
+    font-size: 12px;
+    line-height: 1.2;
+    white-space: nowrap;
+  }
+
+  /* 手機版篩選列滿版直排 */
+  .filter-bar {
+    flex-direction: column;
+  }
+  .search-wrap,
+  .search-input,
+  .filter-select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 手機版不使用 table，避免 min-width 造成左右滑動 */
+  .desktop-table-wrap {
+    display: none !important;
+  }
+  .mobile-admin-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .mobile-state-card,
+  .mobile-admin-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .mobile-state-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 120px;
+    padding: 24px;
+    color: #999;
+    font-size: 14px;
+  }
+  .mobile-admin-card {
+    padding: 14px;
+  }
+  .mobile-admin-head {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    padding-bottom: 12px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .mobile-admin-main {
+    min-width: 0;
+    flex: 1;
+  }
+  .mobile-admin-name {
+    color: #1a2744;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.4;
+  }
+  .mobile-admin-email {
+    color: #667085;
+    font-size: 12px;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+  }
+  .mobile-admin-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .mobile-admin-label {
+    color: #8892a6;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .mobile-admin-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #333;
+  }
+  .mobile-admin-date {
+    color: #888;
+    font-size: 13px;
+  }
+  .mobile-admin-actions {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1fr;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-top: 12px;
+  }
+  .mobile-admin-actions .btn-action,
+  .mobile-admin-actions .btn-send {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 6px 8px;
+  }
+
   .form-grid-2 {
     grid-template-columns: 1fr;
   }
-  .data-table {
-    min-width: 700px;
+  .radio-group {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .modal-md {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .permission-title-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .btn-title-action {
+    padding-left: 10px;
+    padding-right: 10px;
+    font-size: 13px;
+  }
+  .stat-cards {
+    gap: 6px;
+  }
+  .stat-card {
+    padding: 10px 4px;
+  }
+  .stat-num {
+    font-size: 20px;
+  }
+  .stat-label {
+    font-size: 11px;
+  }
+  .mobile-admin-row {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .mobile-admin-actions {
+    grid-template-columns: 1fr;
   }
 }
 </style>
