@@ -15,14 +15,14 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img src="@/assets/image/Vector (2).png" alt="Facebook" />
+            <img src="@/assets/image/Vector (2).webp" alt="Facebook" />
           </a>
           <a
             href="https://line.me/R/ti/p/@316zsgcf?ts=07021638&oat_content=url"
             target="_blank"
             rel="noopener noreferrer"
           >
-            <img src="@/assets/image/Vector (3).png" alt="Line" />
+            <img src="@/assets/image/Vector (3).webp" alt="Line" />
           </a>
         </div>
       </div>
@@ -31,15 +31,15 @@
         <h3>聯絡資訊</h3>
         <ul>
           <li>
-            <img src="@/assets/image/Vector (4).png" alt="電話" class="icon" />
+            <img src="@/assets/image/Vector (4).webp" alt="電話" class="icon" />
             <span>電話:(03) 431-5700</span>
           </li>
           <li>
-            <img src="@/assets/image/Vector (5).png" alt="地址" class="icon" />
+            <img src="@/assets/image/Vector (5).webp" alt="地址" class="icon" />
             <span>地址:桃園市楊梅區永美路274號</span>
           </li>
           <li>
-            <img src="@/assets/image/Vector (6).png" alt="營業時間" class="icon" />
+            <img src="@/assets/image/Vector (6).webp" alt="營業時間" class="icon" />
             <span>
               營業時間:週一至週日<br />
               早診 09:00-11:40<br />
@@ -297,7 +297,7 @@ export default {
     z-index: 10000;
     margin-top: clamp(-130px, -8vw, -90px);
     padding-top: clamp(150px, 15vw, 210px);
-    background: url('@/assets/image/Vector-3.png') top center / 100% 100% no-repeat;
+    background: url('@/assets/image/Vector-3.webp') top center / 100% 100% no-repeat;
   }
 }
 

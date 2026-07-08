@@ -661,7 +661,7 @@ export default {
           if (this.form.otherExperienceRaw.trim()) fd.append('otherExperience', this.form.otherExperienceRaw.trim());
           // 有重新裁切才送新照片，否則後端保留舊照片
           if (this._croppedBlob) {
-            fd.append('photo', this._croppedBlob, 'photo.png');
+            fd.append('photo', this._croppedBlob, 'photo.webp');
           }
 
           const res = await doctorsAPI.update(this._editingId, fd);
@@ -694,7 +694,7 @@ export default {
         if (this.form.otherExperienceRaw.trim()) fd.append('otherExperience', this.form.otherExperienceRaw.trim());
         // createdBy 由後端從 JWT 自動帶入，前端不傳
         if (this._croppedBlob) {
-          fd.append('photo', this._croppedBlob, 'photo.png');
+          fd.append('photo', this._croppedBlob, 'photo.webp');
         }
 
         const res = await doctorsAPI.create(fd);
@@ -1302,7 +1302,7 @@ export default {
 .required    { color: #e53e3e; }
 .form-input  { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; background: #fff; }
 .form-input:focus { border-color: #2c5282; }
-.form-textarea { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; resize: vertical; transition: border-color .2s; min-height: 80px; }
+.form-textarea { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; resize: none; transition: border-color .2s; min-height: 80px; }
 .form-textarea:focus { border-color: #2c5282; }
 .form-error  { font-size: 12px; color: #e53e3e; }
 

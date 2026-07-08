@@ -3,7 +3,7 @@
     <!-- ===== 服務項目區塊 ===== -->
     <div class="service-page">
       <div class="service-header">
-        <img src="@/assets/image/Group 77.png" alt="服務項目" />
+        <img src="@/assets/image/Group 77.webp" alt="服務項目" />
       </div>
 
       <section class="service-grid">
@@ -13,7 +13,7 @@
             <div class="icon-wrap">
               <img
                 class="icon-img"
-                src="@/assets/image/Group 78.png"
+                src="@/assets/image/Group 78.webp"
                 alt="門診"
               />
             </div>
@@ -33,7 +33,7 @@
             <div class="icon-wrap">
               <img
                 class="icon-img"
-                src="@/assets/image/Group 79.png"
+                src="@/assets/image/Group 79.webp"
                 alt="絕育補助"
               />
             </div>
@@ -50,7 +50,7 @@
             <div class="icon-wrap">
               <img
                 class="icon-img"
-                src="@/assets/image/Group 80.png"
+                src="@/assets/image/Group 80.webp"
                 alt="犬貓預防針"
               />
             </div>
@@ -72,7 +72,7 @@
             <div class="icon-wrap">
               <img
                 class="icon-img"
-                src="@/assets/image/Group 82.png"
+                src="@/assets/image/Group 82.webp"
                 alt="本院提供"
               />            </div>
             <div class="card-box">
@@ -91,7 +91,7 @@
             <div class="icon-wrap">
               <img
                 class="icon-img"
-                src="@/assets/image/Group 81.png"
+                src="@/assets/image/Group 81.webp"
                 alt="診療設備"
               />
             </div>
@@ -124,7 +124,7 @@
     <!-- ===== 就診資訊區塊 ===== -->
     <section class="info-section">
       <div class="info-header">
-        <img src="@/assets/image/Group 83.png" alt="就診資訊" />
+        <img src="@/assets/image/Group 83.webp" alt="就診資訊" />
       </div>
       <hr class="divider" />
 
@@ -135,7 +135,7 @@
 
           <div class="info-block">
             <img
-              src="@/assets/image/Vector (7).png"
+              src="@/assets/image/Vector (7).webp"
               alt="營業時間"
               class="info-icon"
             />
@@ -149,7 +149,7 @@
 
           <div class="info-block">
             <img
-              src="@/assets/image/Vector (8).png"
+              src="@/assets/image/Vector (8).webp"
               alt="電話"
               class="info-icon"
             />
@@ -160,7 +160,7 @@
 
           <div class="info-block">
             <img
-              src="@/assets/image/Vector (9).png"
+              src="@/assets/image/Vector (9).webp"
               alt="地址"
               class="info-icon"
             />
@@ -171,11 +171,11 @@
 
           <div class="social-links">
             <div>
-              <img src="@/assets/image/image 9.png" alt="官方LINE" />
+              <img src="@/assets/image/image 9.webp" alt="官方LINE" />
               <p>官方LINE</p>
             </div>
             <div>
-              <img src="@/assets/image/image 10.png" alt="官方粉絲專頁" />
+              <img src="@/assets/image/image 10.webp" alt="官方粉絲專頁" />
               <p>官方粉絲專頁</p>
             </div>
           </div>
@@ -185,7 +185,7 @@
         <div class="notice-info">
           <div class="notice-row">
             <div class="icon-col">
-              <img src="@/assets/image/Mask group (1).png" alt="就診注意事項" />
+              <img src="@/assets/image/Mask group (1).webp" alt="就診注意事項" />
             </div>
             <div class="text-col">
               <h3>就診注意事項</h3>
@@ -256,7 +256,7 @@ export default {
             "@type": "VeterinaryCare",
             name: "人人動物醫院埔心分院",
             image:
-              "https://www.zmnzmnpusin.com.tw/img/Mask%20group.aa3631b4.png",
+              "https://www.zmnzmnpusin.com.tw/img/Mask%20group.aa3631b4.webp",
             telephone: "(03) 431-5700",
             address: {
               "@type": "PostalAddress",

@@ -2,7 +2,7 @@
   <aside class="sidebar" :class="{ collapsed: collapsed, 'mobile-open': mobileOpen }">
     <!-- Logo -->
     <div class="sidebar-logo">
-      <img src="/Mask group.png" alt="人人動物醫院" class="logo-mark" />
+      <img src="/Mask group.webp" alt="人人動物醫院" class="logo-mark" />
       <span class="logo-text" v-show="!collapsed">後台管理</span>
       <!-- 行動版關閉按鈕 -->
       <button class="mobile-close-btn" v-if="mobileOpen" @click="$emit('close')">

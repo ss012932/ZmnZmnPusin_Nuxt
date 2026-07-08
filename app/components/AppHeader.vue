@@ -2,7 +2,7 @@
   <header class="navbar" :style="{ backgroundColor: displayBgWhite ? '#ffffff' : '#fffaf0' }">
     <div class="navbar-logo">
       <div class="logo-circle">
-        <img src="@/assets/image/Maskgroup.png" alt="Logo" />
+        <img src="@/assets/image/Maskgroup.webp" alt="Logo" />
       </div>
       <span class="navbar-title">人人動物醫院埔心分院</span>
     </div>
