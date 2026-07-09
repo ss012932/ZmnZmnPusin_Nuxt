@@ -11,7 +11,7 @@
       <!-- 貓咪圖片 + 問號裝飾 -->
       <div class="illustration-wrap">
         <span class="q-mark q-mark-right" aria-hidden="true">?</span>
-        <img src="@/assets/image/cat.png" alt="迷路的貓咪醫師" class="cat-img" />
+        <img src="@/assets/image/cat.webp" alt="迷路的貓咪醫師" class="cat-img" />
       </div>
 
       <!-- 404 數字 -->

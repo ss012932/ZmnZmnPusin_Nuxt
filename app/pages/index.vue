@@ -2,10 +2,10 @@
   <div>
     <!-- Hero 區塊 -->
 <section class="hero">
-  <div class="hero-container">
+  <div class="hero-container fade-in-item">
     <!-- 左側圖片區 -->
     <div class="hero-image">
-      <img src="@/assets/image/Group-75.png" alt="Dog and Cat" />
+      <img src="@/assets/image/Group-75.webp" alt="Dog and Cat" />
     </div>
 
     <!-- 右側文字區 -->
@@ -21,36 +21,36 @@
 
     <!-- 診所簡介區塊 -->
     <section class="intro">
-      <div class="intro-title">
+      <div class="intro-title fade-in-item fade-in-delay-1">
         <h2>診所簡介</h2>
-        <img src="@/assets/image/Objects.png" alt="icon" />
+        <img src="@/assets/image/Objects.webp" alt="icon" />
       </div>
 
-      <div class="intro-content">
+      <div class="intro-content fade-in-item fade-in-delay-1">
         <div class="intro-left">
           <div class="intro-item">
-            <img src="@/assets/image/Vector.png" alt="icon" />
+            <img src="@/assets/image/Vector.webp" alt="icon" />
             <div>
               <h3>人人動物醫院埔心分院</h3>
               <p>本院位於楊梅區永美路274號(埔心車站同一側)</p>
             </div>
           </div>
           <div class="intro-item">
-            <img src="@/assets/image/Group.png" alt="icon" />
+            <img src="@/assets/image/Group.webp" alt="icon" />
             <div>
               <h3>一般門診皆為現場掛號</h3>
               <p>如有手術諮詢、健檢諮詢或其他需求，請於營業時間致電本院</p>
             </div>
           </div>
           <div class="intro-item">
-            <img src="@/assets/image/Vector (1).png" alt="icon" />
+            <img src="@/assets/image/Vector (1).webp" alt="icon" />
             <div>
               <h3>本院設備</h3>
               <p>人醫等級HEPA系統的標準手術室、GE全自動麻醉機、BOWA高級電刀系統、DR X光、牙科專用X光、軟式及硬式內視鏡、實驗室等級血液生化分析儀、杜普勒彩色超音波…等</p>
             </div>
           </div>
           <div class="intro-item">
-            <img src="@/assets/image/Group 31.png" alt="icon" />
+            <img src="@/assets/image/Group 31.webp" alt="icon" />
             <div>
               <h3>本院醫師專長</h3>
               <p>犬貓內科、外科、產科、心臟科、齒科、神經內科、雷射治療、再生醫療</p>
@@ -59,7 +59,7 @@
         </div>
 
         <div class="intro-right">
-          <img src="@/assets/image/image 7.png" alt="Clinic Cat" />
+          <img src="@/assets/image/image 7.webp" alt="Clinic Cat" />
         </div>
       </div>
     </section>
@@ -67,17 +67,17 @@
     <!-- 飼主反饋 + 常見問題 區塊 -->
 <section class="feedback-faq">
 
-  <div class="section-title">
-    <img src="@/assets/image/Objects (1).png" alt="icon" />
+  <div class="section-title fade-in-item fade-in-delay-1">
+    <img src="@/assets/image/Objects (1).webp" alt="icon" />
     <h2>飼主反饋</h2>
   </div>
 
-  <section class="feedback">
+  <section class="feedback fade-in-item fade-in-delay-2">
     <div class="feedback-layout">
 
       <!-- 左側：圖片 + 評分摘要 -->
       <div class="feedback-left">
-        <img src="@/assets/image/Group 76.png" alt="Owner with pet" />
+        <img src="@/assets/image/Group 76.webp" alt="Owner with pet" />
         <div class="feedback-summary">
           <div class="summary-score">5.0</div>
           <div class="summary-stars">★★★★★</div>
@@ -191,12 +191,12 @@
   </Transition>
 
   <!-- 常見問題 -->
-  <div class="section-title faq-title">
+  <div class="section-title faq-title fade-in-item fade-in-delay-2">
     <h3>常見問題</h3>
-    <img src="@/assets/image/Objects (1).png" alt="icon" />
+    <img src="@/assets/image/Objects (1).webp" alt="icon" />
   </div>
 
-  <div class="faq-content">
+  <div class="faq-content fade-in-item fade-in-delay-2">
     <div class="faq-item" v-for="(faq, i) in faqs" :key="i">
       <button class="faq-question" @click="toggleFaq(i)">
         {{ faq.question }}
@@ -223,7 +223,7 @@ export default {
       keywords:           '楊梅動物醫院, 埔心獸醫, 人人動物醫院, 桃園獸醫推薦, 狗狗看診, 貓咪健檢, 雷射治療, 蔡欣叡醫師, 陳俊憲醫師',
       ogTitle:            '人人動物醫院埔心分院',
       ogDescription:      '專業犬貓醫療團隊｜楊梅永美路動物醫院｜內外科、牙科、雷射治療、再生醫療。',
-      ogImage:            'https://www.zmnzmnpusin.com.tw/og-image.png',
+      ogImage:            'https://www.zmnzmnpusin.com.tw/og-image.webp',
       ogUrl:              'https://www.zmnzmnpusin.com.tw/',
       ogType:             'website',
       twitterCard:        'summary_large_image',
@@ -240,7 +240,7 @@ export default {
             '@context': 'https://schema.org',
             '@type':    'VeterinaryCare',
             name:       '人人動物醫院埔心分院',
-            image:      'https://www.zmnzmnpusin.com.tw/img/Mask%20group.aa3631b4.png',
+            image:      'https://www.zmnzmnpusin.com.tw/img/Mask%20group.aa3631b4.webp',
             address: {
               '@type':         'PostalAddress',
               streetAddress:   '桃園市楊梅區永美路274號',
@@ -462,6 +462,39 @@ export default {
 </script>
 
 <style scoped>
+/* =============================================
+   物件淡入動畫
+   說明：只讓頁面內的主要物件淡入，不套在整個頁面，避免 Header 或背景跟著閃動。
+   ============================================= */
+.fade-in-item {
+  animation: objectFadeIn 0.32s ease-out both;
+  will-change: opacity;
+}
+
+.fade-in-delay-1 {
+  animation-delay: 0.08s;
+}
+
+.fade-in-delay-2 {
+  animation-delay: 0.16s;
+}
+
+@keyframes objectFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* 使用者若設定減少動態效果，就停用動畫，避免造成不適。 */
+@media (prefers-reduced-motion: reduce) {
+  .fade-in-item {
+    animation: none;
+  }
+}
+
 * {
   box-sizing: border-box;
   font-family: 'Microsoft JhengHei', '微軟正黑體', sans-serif;
@@ -692,7 +725,7 @@ img {
     clamp(14px, 4vw, 56px)
     clamp(48px, 7vw, 80px);
   color: #133b63;
-  background: #fff url('@/assets/image/Vector 2.png') no-repeat center top / cover;
+  background: #fff url('@/assets/image/Vector 2.webp') no-repeat center top / cover;
   border-top-left-radius: clamp(32px, 5vw, 64px);
   border-top-right-radius: clamp(32px, 5vw, 64px);
 }

@@ -4,7 +4,7 @@
       <!-- 頁首 -->
       <div class="page-header">
         <img
-          src="@/assets/image/Vector (10).png"
+          src="@/assets/image/Vector (10).webp"
           alt="衛教專區圖標"
           class="header-icon"
         />
@@ -876,7 +876,7 @@ export default {
       ogDescription:    '提供犬貓骨骼關節、泌尿、生殖、消化、皮膚、心肺等常見疾病衛教文章，由專業獸醫師撰寫。',
       ogType:           'website',
       ogUrl:            'https://www.zmnzmnpusin.com.tw/disease',
-      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.png',
+      ogImage:          'https://www.zmnzmnpusin.com.tw/og-image.webp',
       twitterCard:      'summary_large_image',
       twitterTitle:     '衛教專區・疾病分享｜人人動物醫院埔心分院',
       twitterDescription: '犬貓常見疾病衛教文章，由人人動物醫院埔心分院專業獸醫師撰寫。',

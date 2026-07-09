@@ -8,7 +8,7 @@
           <h2 class="page-title">文章管理</h2>
           <p class="page-desc">管理前台「衛教專區」的文章內容</p>
         </div>
-        <div class="header-actions">
+        <div class="header-actions list-header-actions">
           <NuxtLink to="/admin/categories" class="btn btn-outline">
             <iconify-icon icon="mdi:tag-multiple-outline" width="17"></iconify-icon>
             管理類別
@@ -42,7 +42,7 @@
       </div>
 
       <!-- 表格 -->
-      <div class="table-wrap">
+      <div class="table-wrap desktop-table-wrap">
         <table class="data-table">
           <thead>
             <tr>
@@ -66,7 +66,7 @@
             <tr v-else-if="filteredArticles.length === 0">
               <td colspan="8" class="empty-row">目前沒有符合條件的文章</td>
             </tr>
-            <tr v-for="art in filteredArticles" :key="art.id">
+            <tr v-for="art in paginatedArticles" :key="art.id">
               <td class="td-title" :title="art.title">{{ art.title }}</td>
               <td>
                 <span class="cat-badge parent">{{ art.mainCategoryName || '—' }}</span>
@@ -108,20 +108,126 @@
           </tbody>
         </table>
       </div>
+
+      <!-- 手機版文章卡片列表：不用 table，避免 min-width 造成左右滑動 -->
+      <div class="mobile-article-list">
+        <div v-if="listLoading" class="mobile-state-card">
+          <iconify-icon icon="mdi:loading" width="20" class="spin"></iconify-icon>
+          載入中...
+        </div>
+
+        <div v-else-if="filteredArticles.length === 0" class="mobile-state-card">
+          目前沒有符合條件的文章
+        </div>
+
+        <template v-else>
+          <article v-for="art in paginatedArticles" :key="`mobile-article-${art.id}`" class="mobile-article-card">
+            <div class="mobile-article-title">{{ art.title }}</div>
+
+            <div class="mobile-article-row">
+              <div class="mobile-article-label">母類別</div>
+              <div class="mobile-article-value">
+                <span class="cat-badge parent">{{ art.mainCategoryName || '—' }}</span>
+              </div>
+            </div>
+
+            <div class="mobile-article-row">
+              <div class="mobile-article-label">子類別</div>
+              <div class="mobile-article-value">
+                <span v-if="art.subCategoryName" class="cat-badge sub">{{ art.subCategoryName }}</span>
+                <span v-else class="no-sub">—</span>
+              </div>
+            </div>
+
+            <div class="mobile-article-row">
+              <div class="mobile-article-label">段落數</div>
+              <div class="mobile-article-value">
+                <span class="section-count-badge">{{ art.sectionCount }} 段</span>
+              </div>
+            </div>
+
+            <div class="mobile-article-row">
+              <div class="mobile-article-label">精選</div>
+              <div class="mobile-article-value">
+                <iconify-icon v-if="art.isFeatured" icon="mdi:star" width="16" style="color:#f6ad55"></iconify-icon>
+                <span v-else class="no-sub">—</span>
+              </div>
+            </div>
+
+            <div class="mobile-article-row">
+              <div class="mobile-article-label">狀態</div>
+              <div class="mobile-article-value">
+                <span class="status-badge" :class="art.status">
+                  {{ art.status === 'published' ? '已發布' : '草稿' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="mobile-article-row">
+              <div class="mobile-article-label">更新時間</div>
+              <div class="mobile-article-value mobile-article-date">{{ formatDate(art.updatedAt) }}</div>
+            </div>
+
+            <div class="mobile-article-actions">
+              <button class="btn-action btn-preview" @click="openListPreview(art)" title="預覽">
+                <iconify-icon icon="mdi:eye-outline" width="14"></iconify-icon>
+                預覽
+              </button>
+              <button class="btn-action btn-edit" @click="openEdit(art.id)" title="編輯">
+                <iconify-icon icon="mdi:pencil-outline" width="14"></iconify-icon>
+                編輯
+              </button>
+              <button class="btn-action btn-delete" @click="confirmDelete(art)" title="刪除">
+                <iconify-icon icon="mdi:trash-can-outline" width="14"></iconify-icon>
+                刪除
+              </button>
+            </div>
+          </article>
+        </template>
+      </div>
+
+      <!-- 分頁列：篩選後資料每頁固定顯示 10 筆 -->
+      <div v-if="!listLoading && filteredArticles.length > 0" class="pagination-wrap">
+        <div class="pagination-info">
+          顯示第 {{ paginationStart }} - {{ paginationEnd }} 筆，共 {{ filteredArticles.length }} 筆
+        </div>
+
+        <div class="pagination-controls" aria-label="文章清單分頁">
+          <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
+            <iconify-icon icon="mdi:chevron-left" width="16"></iconify-icon>
+            上一頁
+          </button>
+
+          <button
+            v-for="page in visiblePageNumbers"
+            :key="page"
+            class="page-number"
+            :class="{ active: currentPage === page }"
+            @click="goToPage(page)"
+          >
+            {{ page }}
+          </button>
+
+          <button class="page-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
+            下一頁
+            <iconify-icon icon="mdi:chevron-right" width="16"></iconify-icon>
+          </button>
+        </div>
+      </div>
     </template>
 
     <!-- ══ Step 1：基本設定 ══ -->
     <template v-if="view === 'step1'">
-      <div class="page-header">
-        <div>
-          <h2 class="page-title">{{ isEditing ? '編輯文章' : '新增文章' }}</h2>
+      <div class="page-header edit-page-header">
+        <div class="edit-title-block">
+          <div class="edit-title-row">
+            <h2 class="page-title">{{ isEditing ? '編輯文章' : '新增文章' }}</h2>
+            <button class="btn btn-ghost btn-title-action" @click="tryGoToList">
+              <iconify-icon icon="mdi:close" width="16"></iconify-icon>
+              取消
+            </button>
+          </div>
           <p class="page-desc">第 1 步：設定基本資訊與目錄段落</p>
-        </div>
-        <div class="header-actions">
-          <button class="btn btn-ghost" @click="tryGoToList">
-            <iconify-icon icon="mdi:close" width="16"></iconify-icon>
-            取消
-          </button>
         </div>
       </div>
 
@@ -342,27 +448,6 @@
             <span class="section-nav-title">{{ sec.sectionTitle || '（未命名段落）' }}</span>
             <iconify-icon v-if="sec.isHide" icon="mdi:eye-off-outline" width="12" class="nav-hide-icon"></iconify-icon>
           </div>
-
-          <!-- 封面圖上傳（側欄） -->
-          <div class="cover-upload-panel" v-if="isEditing && _editingId">
-            <div class="cover-upload-header">
-              <iconify-icon icon="mdi:image-outline" width="14"></iconify-icon>
-              封面圖
-            </div>
-            <div class="cover-preview" v-if="coverPreviewUrl">
-              <img :src="coverPreviewUrl" alt="封面圖預覽" />
-            </div>
-            <div class="cover-placeholder" v-else>
-              <iconify-icon icon="mdi:image-plus-outline" width="28"></iconify-icon>
-              <span>尚未上傳封面圖</span>
-            </div>
-            <label class="btn btn-outline btn-sm cover-upload-btn">
-              <iconify-icon icon="mdi:upload" width="14"></iconify-icon>
-              {{ coverUploading ? '上傳中...' : '選擇圖片' }}
-              <input type="file" accept="image/jpeg,image/png,image/webp" style="display:none" @change="onCoverFileChange" :disabled="coverUploading" />
-            </label>
-            <span class="cover-hint">jpg / png / webp，最大 5 MB</span>
-          </div>
         </div>
 
         <!-- 右側：富文本編輯 -->
@@ -524,6 +609,8 @@ export default {
       searchKeyword: '',
       filterMainCatId: '',
       filterStatus: '',
+      currentPage: 1,   // 分頁目前頁數
+      pageSize: 10,     // 每頁固定顯示 10 筆文章
 
       // 類別
       mainCategories: [],
@@ -562,6 +649,43 @@ export default {
         const matchStatus = !this.filterStatus    || a.status === this.filterStatus;
         return matchTitle && matchCat && matchStatus;
       });
+    },
+
+    /* ── 分頁後的文章清單：畫面只渲染目前頁的 10 筆 ── */
+    paginatedArticles() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredArticles.slice(start, start + this.pageSize);
+    },
+
+    /* ── 總頁數：至少保留 1 頁，避免頁碼計算出現 0 ── */
+    totalPages() {
+      return Math.max(1, Math.ceil(this.filteredArticles.length / this.pageSize));
+    },
+
+    /* ── 目前頁第一筆序號，用於分頁資訊文字 ── */
+    paginationStart() {
+      if (this.filteredArticles.length === 0) return 0;
+      return (this.currentPage - 1) * this.pageSize + 1;
+    },
+
+    /* ── 目前頁最後一筆序號，用於分頁資訊文字 ── */
+    paginationEnd() {
+      return Math.min(this.currentPage * this.pageSize, this.filteredArticles.length);
+    },
+
+    /* ── 頁碼按鈕：最多顯示 5 個頁碼，手機版不會太擠 ── */
+    visiblePageNumbers() {
+      const maxVisible = 5;
+      let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+      let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+      start = Math.max(1, end - maxVisible + 1);
+
+      const pages = [];
+      for (let page = start; page <= end; page += 1) {
+        pages.push(page);
+      }
+      return pages;
     },
 
     currentSubCategories() {
@@ -605,6 +729,28 @@ export default {
   },
 
   watch: {
+    /* ── 搜尋條件改變時回到第 1 頁 ── */
+    searchKeyword() {
+      this.currentPage = 1;
+    },
+
+    /* ── 母類別篩選改變時回到第 1 頁 ── */
+    filterMainCatId() {
+      this.currentPage = 1;
+    },
+
+    /* ── 狀態篩選改變時回到第 1 頁 ── */
+    filterStatus() {
+      this.currentPage = 1;
+    },
+
+    /* ── 文章新增、刪除或重新載入後，避免停在不存在的頁碼 ── */
+    filteredArticles() {
+      if (this.currentPage > this.totalPages) {
+        this.currentPage = this.totalPages;
+      }
+    },
+
     form: {
       handler() {
         if (!this.isDirty) return;
@@ -625,6 +771,11 @@ export default {
   },
 
   methods: {
+    /* ── 分頁切換：限制頁碼範圍，避免切到小於 1 或大於總頁數 ── */
+    goToPage(page) {
+      this.currentPage = Math.min(Math.max(page, 1), this.totalPages);
+    },
+
     emptyForm() {
       return { title: '', mainCategoryId: '', subCategoryId: '', summary: '', code: '', isFeatured: false, sections: [] }; // code 唯讀，僅顯示用
     },
@@ -948,6 +1099,11 @@ export default {
 
 <style>
 .header-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.desktop-table-wrap { display: block; }
+.mobile-article-list { display: none; }
+.edit-title-block { min-width: 0; }
+.edit-title-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.btn-title-action { padding: 7px 12px; }
 .btn-outline {
   display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px;
   border-radius: 8px; font-size: 14px; font-weight: 600; font-family: inherit;
@@ -976,6 +1132,68 @@ export default {
 .section-count-badge { display: inline-block; padding: 3px 8px; border-radius: 999px; font-size: 11px; font-weight: 600; background: #f0f0f0; color: #666; }
 .td-title { font-weight: 600; color: #1a2744; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .td-date { font-size: 13px; color: #aaa; white-space: nowrap; }
+
+/* ── Pagination ── */
+.pagination-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.pagination-info {
+  font-size: 13px;
+  color: #777;
+  white-space: nowrap;
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.page-btn,
+.page-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.page-number {
+  min-width: 34px;
+  padding: 7px 10px;
+}
+.page-btn:hover:not(:disabled),
+.page-number:hover:not(.active) {
+  border-color: #2c5282;
+  color: #2c5282;
+  background: #eef3fa;
+}
+.page-number.active {
+  border-color: #2c5282;
+  background: #2c5282;
+  color: #fff;
+}
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -1170,8 +1388,242 @@ export default {
   .section-nav-panel { position: static; }
   .form-row { grid-template-columns: 1fr; }
 }
-@media (max-width: 600px) {
-  .data-table { min-width: 720px; }
-  .step-card { padding: 20px 16px; }
+
+@media (max-width: 760px) {
+  .article-admin {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+
+  .page-header {
+    align-items: stretch;
+  }
+  .header-actions {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  .header-actions.list-header-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .header-actions .btn,
+  .header-actions .btn-outline {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* 編輯頁標題列：取消按鈕固定在標題右邊 */
+  .edit-page-header {
+    display: block;
+  }
+  .edit-title-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .edit-title-row .page-title {
+    margin-bottom: 0;
+    min-width: 0;
+  }
+  .btn-title-action {
+    width: auto;
+    min-height: 36px;
+    padding: 7px 12px;
+    flex-shrink: 0;
+  }
+
+  .filter-bar {
+    flex-direction: column;
+  }
+  .search-wrap,
+  .search-input,
+  .filter-select,
+  .filter-bar .btn {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 手機版不使用 table，避免 data-table 的 min-width 撐破畫面 */
+  .desktop-table-wrap {
+    display: none !important;
+  }
+  .mobile-article-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .mobile-state-card,
+  .mobile-article-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .mobile-state-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 120px;
+    padding: 24px;
+    color: #999;
+    font-size: 14px;
+  }
+  .mobile-article-card {
+    padding: 14px;
+  }
+  .mobile-article-title {
+    color: #1a2744;
+    font-size: 15px;
+    font-weight: 700;
+    line-height: 1.5;
+    padding-bottom: 12px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid #f0f0f0;
+    overflow-wrap: anywhere;
+  }
+  .mobile-article-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .mobile-article-label {
+    color: #8892a6;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .mobile-article-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #333;
+  }
+  .mobile-article-date {
+    color: #888;
+    font-size: 13px;
+  }
+  .mobile-article-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-top: 12px;
+  }
+  .mobile-article-actions .btn-action,
+  .mobile-article-actions .btn-preview {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 6px 8px;
+  }
+
+  .pagination-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pagination-info {
+    text-align: center;
+    white-space: normal;
+  }
+  .pagination-controls {
+    justify-content: center;
+  }
+  .page-btn {
+    flex: 1 1 96px;
+  }
+
+  .step-card {
+    max-width: 100%;
+    padding: 20px 16px;
+  }
+  .step-indicator {
+    align-items: flex-start;
+  }
+  .step-label {
+    font-size: 13px;
+  }
+  .sections-header {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sections-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .section-row {
+    display: grid;
+    grid-template-columns: 24px 24px minmax(0, 1fr) 32px 32px;
+    gap: 6px;
+  }
+  .seo-field-row {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .seo-field-label {
+    width: auto;
+    padding-top: 0;
+  }
+  .editor2-layout {
+    gap: 14px;
+  }
+  .section-editor-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+  .section-editor-title {
+    flex-wrap: wrap;
+    font-size: 15px;
+  }
+  .unified-container-preview {
+    padding: 20px 16px;
+  }
+  .content-title-preview,
+  .preview-section-title {
+    font-size: 22px;
+  }
+}
+
+@media (max-width: 420px) {
+  .header-actions.list-header-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .header-actions.list-header-actions .btn,
+  .header-actions.list-header-actions .btn-outline {
+    padding-left: 8px;
+    padding-right: 8px;
+    font-size: 13px;
+  }
+  .mobile-article-row {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .mobile-article-actions {
+    grid-template-columns: 1fr;
+  }
+  .pagination-controls {
+    gap: 5px;
+  }
+  .page-number {
+    min-width: 32px;
+  }
 }
 </style>

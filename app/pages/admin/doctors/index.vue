@@ -26,7 +26,7 @@
     </div>
 
     <!-- 表格 -->
-    <div class="table-wrap">
+    <div class="table-wrap desktop-table-wrap">
       <table class="data-table">
         <thead>
           <tr>
@@ -40,17 +40,17 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-if="isFetching">
+          <tr v-if="isFetching" class="state-row">
             <td colspan="7" class="empty-row">
               <iconify-icon icon="mdi:loading" width="20" class="spin"></iconify-icon>
               載入中...
             </td>
           </tr>
-          <tr v-else-if="filteredDoctors.length === 0">
+          <tr v-else-if="filteredDoctors.length === 0" class="state-row">
             <td colspan="7" class="empty-row">目前沒有符合條件的醫師</td>
           </tr>
           <tr
-            v-for="(doc, idx) in filteredDoctors"
+            v-for="doc in paginatedDoctors"
             :key="doc.id"
             :data-doc-id="doc.id"
             draggable="true"
@@ -64,28 +64,28 @@
             @drop.prevent="drop(doc)"
             @dragend="dragEnd"
           >
-            <td class="td-drag"
+            <td class="td-drag" data-label="排序"
               @touchstart="touchDragStart($event, doc.id)"
             >
               <iconify-icon icon="mdi:drag-vertical" width="18" class="drag-handle"></iconify-icon>
             </td>
-            <td>
+            <td data-label="照片">
               <img :src="doc.photo" :alt="doc.name" class="table-avatar" />
             </td>
-            <td class="td-name">{{ doc.name }}</td>
-            <td><span class="dept-badge">{{ doc.department }}</span></td>
-            <td>
+            <td class="td-name" data-label="姓名">{{ doc.name }}</td>
+            <td data-label="科別"><span class="dept-badge">{{ doc.department }}</span></td>
+            <td data-label="職稱">
               <div class="tag-list">
                 <span v-for="(t, i) in doc.titleTags" :key="i" class="title-tag">{{ t }}</span>
               </div>
             </td>
-            <td>
+            <td data-label="專業領域">
               <div class="tag-list">
                 <span v-for="(s, i) in doc.specialties.slice(0, 3)" :key="i" class="spec-chip">{{ s }}</span>
                 <span v-if="doc.specialties.length > 3" class="spec-more">+{{ doc.specialties.length - 3 }}</span>
               </div>
             </td>
-            <td>
+            <td data-label="操作">
               <div class="action-btns">
                 <button class="btn-action btn-edit" @click="openEdit(doc)">
                   <iconify-icon icon="mdi:pencil-outline" width="14"></iconify-icon>編輯
@@ -98,6 +98,121 @@
           </tr>
         </tbody>
       </table>
+    </div>
+
+    <!-- 手機版醫師卡片列表：不用 table，避免 min-width 造成左右滑動 -->
+    <div class="mobile-doctor-list">
+      <div v-if="isFetching" class="mobile-state-card">
+        <iconify-icon icon="mdi:loading" width="20" class="spin"></iconify-icon>
+        載入中...
+      </div>
+
+      <div v-else-if="filteredDoctors.length === 0" class="mobile-state-card">
+        目前沒有符合條件的醫師
+      </div>
+
+      <article
+        v-for="doc in paginatedDoctors"
+        v-else
+        :key="`mobile-${doc.id}`"
+        :data-doc-id="doc.id"
+        class="mobile-doctor-card"
+        :class="{ 'mobile-sort-saving': isSorting }"
+      >
+        <div class="mobile-doctor-row">
+          <div class="mobile-doctor-label">排序</div>
+          <div class="mobile-doctor-value">
+            <select
+              class="mobile-sort-select"
+              :value="getDoctorSortPosition(doc.id)"
+              :disabled="isSorting"
+              @change="handleMobileSortChange(doc, $event.target.value)"
+            >
+              <option v-for="position in doctors.length" :key="position" :value="position">
+                第 {{ position }} 位
+              </option>
+            </select>
+          </div>
+        </div>
+
+        <div class="mobile-doctor-row">
+          <div class="mobile-doctor-label">照片</div>
+          <div class="mobile-doctor-value">
+            <img :src="doc.photo" :alt="doc.name" class="table-avatar" />
+          </div>
+        </div>
+
+        <div class="mobile-doctor-row">
+          <div class="mobile-doctor-label">姓名</div>
+          <div class="mobile-doctor-value mobile-doctor-name">{{ doc.name }}</div>
+        </div>
+
+        <div class="mobile-doctor-row">
+          <div class="mobile-doctor-label">科別</div>
+          <div class="mobile-doctor-value">
+            <span class="dept-badge">{{ doc.department }}</span>
+          </div>
+        </div>
+
+        <div class="mobile-doctor-row">
+          <div class="mobile-doctor-label">職稱</div>
+          <div class="mobile-doctor-value">
+            <div class="tag-list">
+              <span v-for="(t, i) in doc.titleTags" :key="i" class="title-tag">{{ t }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-doctor-row">
+          <div class="mobile-doctor-label">專業領域</div>
+          <div class="mobile-doctor-value">
+            <div class="tag-list">
+              <span v-for="(s, i) in doc.specialties.slice(0, 3)" :key="i" class="spec-chip">{{ s }}</span>
+              <span v-if="doc.specialties.length > 3" class="spec-more">+{{ doc.specialties.length - 3 }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mobile-doctor-actions">
+          <button class="btn-action btn-edit" @click="openEdit(doc)">
+            <iconify-icon icon="mdi:pencil-outline" width="14"></iconify-icon>
+            編輯
+          </button>
+          <button class="btn-action btn-delete" @click="confirmDelete(doc)">
+            <iconify-icon icon="mdi:trash-can-outline" width="14"></iconify-icon>
+            刪除
+          </button>
+        </div>
+      </article>
+    </div>
+
+    <!-- 分頁列：篩選後的資料固定每頁顯示 10 筆 -->
+    <div v-if="!isFetching && filteredDoctors.length > 0" class="pagination-wrap">
+      <div class="pagination-info">
+        顯示第 {{ paginationStart }} - {{ paginationEnd }} 筆，共 {{ filteredDoctors.length }} 筆
+      </div>
+
+      <div class="pagination-controls" aria-label="醫師清單分頁">
+        <button class="page-btn" :disabled="currentPage === 1" @click="goToPage(currentPage - 1)">
+          <iconify-icon icon="mdi:chevron-left" width="16"></iconify-icon>
+          上一頁
+        </button>
+
+        <button
+          v-for="page in visiblePageNumbers"
+          :key="page"
+          class="page-number"
+          :class="{ active: currentPage === page }"
+          @click="goToPage(page)"
+        >
+          {{ page }}
+        </button>
+
+        <button class="page-btn" :disabled="currentPage === totalPages" @click="goToPage(currentPage + 1)">
+          下一頁
+          <iconify-icon icon="mdi:chevron-right" width="16"></iconify-icon>
+        </button>
+      </div>
     </div>
 
     <!-- ══ 新增/編輯 Modal（橫向三區塊） ══ -->
@@ -291,10 +406,13 @@ export default {
     return {
       searchKeyword: '',
       filterDept: '',
+      currentPage: 1,   // 分頁目前頁數
+      pageSize: 10,     // 每頁固定顯示 10 筆資料
       showModal: false,
       isEditing: false,
       isLoading: false,   // 新增/編輯送出 loading
       isFetching: false,  // 清單載入 loading
+      isSorting: false,   // 手機版下拉排序儲存狀態
       formErrors: {},
       nextId: 5,
       _croppedBlob: null,   // confirmCrop 後存放，供 handleSave 上傳用
@@ -340,12 +458,69 @@ export default {
   },
 
   computed: {
+    /* ── 篩選後的完整清單：搜尋與科別條件都在這裡處理 ── */
     filteredDoctors() {
       return this.doctors.filter((d) => {
         const matchName = !this.searchKeyword || d.name.includes(this.searchKeyword);
         const matchDept = !this.filterDept || d.deptKey === this.filterDept;
         return matchName && matchDept;
       });
+    },
+
+    /* ── 分頁後的清單：畫面只渲染目前頁的 10 筆資料 ── */
+    paginatedDoctors() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.filteredDoctors.slice(start, start + this.pageSize);
+    },
+
+    /* ── 總頁數：至少保留 1 頁，避免頁碼計算出現 0 ── */
+    totalPages() {
+      return Math.max(1, Math.ceil(this.filteredDoctors.length / this.pageSize));
+    },
+
+    /* ── 目前頁第一筆的序號，用於分頁資訊文字 ── */
+    paginationStart() {
+      if (this.filteredDoctors.length === 0) return 0;
+      return (this.currentPage - 1) * this.pageSize + 1;
+    },
+
+    /* ── 目前頁最後一筆的序號，用於分頁資訊文字 ── */
+    paginationEnd() {
+      return Math.min(this.currentPage * this.pageSize, this.filteredDoctors.length);
+    },
+
+    /* ── 頁碼按鈕：最多顯示 5 個頁碼，手機版不會太擠 ── */
+    visiblePageNumbers() {
+      const maxVisible = 5;
+      let start = Math.max(1, this.currentPage - Math.floor(maxVisible / 2));
+      let end = Math.min(this.totalPages, start + maxVisible - 1);
+
+      start = Math.max(1, end - maxVisible + 1);
+
+      const pages = [];
+      for (let page = start; page <= end; page += 1) {
+        pages.push(page);
+      }
+      return pages;
+    },
+  },
+
+  watch: {
+    /* ── 搜尋條件改變時，回到第 1 頁，避免停在不存在的頁碼 ── */
+    searchKeyword() {
+      this.currentPage = 1;
+    },
+
+    /* ── 科別條件改變時，回到第 1 頁 ── */
+    filterDept() {
+      this.currentPage = 1;
+    },
+
+    /* ── 資料新增、刪除或重新載入後，確保目前頁數不會超出總頁數 ── */
+    filteredDoctors() {
+      if (this.currentPage > this.totalPages) {
+        this.currentPage = this.totalPages;
+      }
     },
   },
 
@@ -354,6 +529,51 @@ export default {
   },
 
   methods: {
+    /* ── 分頁切換：限制頁碼範圍，避免切到小於 1 或大於總頁數 ── */
+    goToPage(page) {
+      this.currentPage = Math.min(Math.max(page, 1), this.totalPages);
+    },
+
+    /* ── 取得醫師目前在完整清單中的排序位置，手機版下拉選單使用 ── */
+    getDoctorSortPosition(docId) {
+      const index = this.doctors.findIndex((d) => d.id === docId);
+      return index === -1 ? 1 : index + 1;
+    },
+
+    /* ── 手機版下拉排序：選擇第幾位後，重新排列並儲存到後端 ── */
+    async handleMobileSortChange(doc, targetPositionRaw) {
+      const fromIdx = this.doctors.findIndex((d) => d.id === doc.id);
+      const toIdx = Number(targetPositionRaw) - 1;
+
+      if (fromIdx === -1 || Number.isNaN(toIdx) || toIdx < 0 || toIdx >= this.doctors.length) return;
+      if (fromIdx === toIdx) return;
+
+      const originalDoctors = [...this.doctors];
+      this.isSorting = true;
+
+      // 先在前端即時移動，讓使用者馬上看到順序變化
+      const moved = this.doctors.splice(fromIdx, 1)[0];
+      this.doctors.splice(toIdx, 0, moved);
+
+      // 依照新位置重新指派 sortOrder，並送給後端儲存
+      const items = this.doctors.map((d, i) => {
+        d.sortOrder = i + 1;
+        return { id: d.id, sortOrder: i + 1 };
+      });
+
+      try {
+        await doctorsAPI.updateSortOrders(items);
+        await this.fetchDoctors();
+        Swal.fire({ icon: 'success', title: '排序已儲存', showConfirmButton: false, timer: 1000, timerProgressBar: true });
+      } catch (err) {
+        this.doctors = originalDoctors;
+        const msg = err?.response?.data?.message || '排序儲存失敗，請重新整理';
+        Swal.fire({ icon: 'error', title: '排序儲存失敗', text: msg });
+      } finally {
+        this.isSorting = false;
+      }
+    },
+
     /* ── 資料載入 ── */
     async fetchDoctors() {
       this.isFetching = true;
@@ -441,7 +661,7 @@ export default {
           if (this.form.otherExperienceRaw.trim()) fd.append('otherExperience', this.form.otherExperienceRaw.trim());
           // 有重新裁切才送新照片，否則後端保留舊照片
           if (this._croppedBlob) {
-            fd.append('photo', this._croppedBlob, 'photo.png');
+            fd.append('photo', this._croppedBlob, 'photo.webp');
           }
 
           const res = await doctorsAPI.update(this._editingId, fd);
@@ -474,7 +694,7 @@ export default {
         if (this.form.otherExperienceRaw.trim()) fd.append('otherExperience', this.form.otherExperienceRaw.trim());
         // createdBy 由後端從 JWT 自動帶入，前端不傳
         if (this._croppedBlob) {
-          fd.append('photo', this._croppedBlob, 'photo.png');
+          fd.append('photo', this._croppedBlob, 'photo.webp');
         }
 
         const res = await doctorsAPI.create(fd);
@@ -843,10 +1063,11 @@ export default {
 
 /* ── Filter ── */
 .filter-bar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-.search-wrap { position: relative; flex: 1; min-width: 180px; }
+.search-wrap { position: relative; flex: 1 1 260px; min-width: 180px; }
 .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #aaa; pointer-events: none; }
 .search-input {
-  width: 30%;
+  width: 100%;
+  box-sizing: border-box;
   padding: 9px 14px 9px 34px;
   border: 1.5px solid #ddd;
   border-radius: 8px;
@@ -861,6 +1082,8 @@ export default {
 
 /* ── Table ── */
 .table-wrap { background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0,0,0,.06); overflow-x: auto; }
+.desktop-table-wrap { display: block; }
+.mobile-doctor-list { display: none; }
 .data-table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 700px; }
 .data-table thead { background: #f8f9fb; }
 .data-table th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; color: #888; letter-spacing: .06em; text-transform: uppercase; border-bottom: 1px solid #eee; }
@@ -881,6 +1104,68 @@ export default {
 .btn-delete { background: #fff5f5; color: #e53e3e; }
 .btn-delete:hover { background: #fed7d7; }
 .empty-row { text-align: center; padding: 40px !important; color: #bbb; font-size: 14px; }
+
+/* ── Pagination ── */
+.pagination-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.06);
+}
+.pagination-info {
+  font-size: 13px;
+  color: #777;
+  white-space: nowrap;
+}
+.pagination-controls {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.page-btn,
+.page-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 34px;
+  padding: 7px 11px;
+  border: 1.5px solid #e0e0e0;
+  border-radius: 8px;
+  background: #fff;
+  color: #555;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.page-number {
+  min-width: 34px;
+  padding: 7px 10px;
+}
+.page-btn:hover:not(:disabled),
+.page-number:hover:not(.active) {
+  border-color: #2c5282;
+  color: #2c5282;
+  background: #eef3fa;
+}
+.page-number.active {
+  border-color: #2c5282;
+  background: #2c5282;
+  color: #fff;
+}
+.page-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
 
 /* ── Modal 基礎 ── */
 .modal-backdrop {
@@ -1017,7 +1302,7 @@ export default {
 .required    { color: #e53e3e; }
 .form-input  { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; background: #fff; }
 .form-input:focus { border-color: #2c5282; }
-.form-textarea { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; resize: vertical; transition: border-color .2s; min-height: 80px; }
+.form-textarea { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; resize: none; transition: border-color .2s; min-height: 80px; }
 .form-textarea:focus { border-color: #2c5282; }
 .form-error  { font-size: 12px; color: #e53e3e; }
 
@@ -1055,9 +1340,190 @@ tr:hover .drag-handle { color: #aaa; }
   .detail-grid { grid-template-columns: 1fr; }
   .dg-full { grid-column: auto; }
 }
+@media (max-width: 760px) {
+  .doctor-admin {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  .page-header {
+    align-items: stretch;
+  }
+  .page-header .btn {
+    width: 100%;
+    justify-content: center;
+  }
+  .filter-bar {
+    flex-direction: column;
+  }
+  .search-wrap,
+  .filter-select {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* 手機版不再使用 table，避免 table 的 min-width 撐破版面 */
+  .desktop-table-wrap {
+    display: none !important;
+  }
+  .mobile-doctor-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+  .mobile-state-card,
+  .mobile-doctor-card {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+  }
+  .mobile-state-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 120px;
+    padding: 24px;
+    color: #999;
+    font-size: 14px;
+  }
+  .mobile-doctor-card {
+    padding: 12px 14px;
+  }
+  .mobile-doctor-row {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 12px;
+    align-items: center;
+    min-width: 0;
+    padding: 10px 0;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  .mobile-doctor-label {
+    color: #8892a6;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .mobile-doctor-value {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    color: #333;
+  }
+  .mobile-sort-select {
+    width: 100%;
+    min-height: 38px;
+    padding: 8px 34px 8px 12px;
+    border: 1.5px solid #d8e2f0;
+    border-radius: 8px;
+    background: #fff;
+    color: #1a2744;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: inherit;
+    outline: none;
+  }
+  .mobile-sort-select:focus {
+    border-color: #2c5282;
+  }
+  .mobile-sort-select:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+  }
+  .mobile-sort-saving {
+    opacity: 0.72;
+    pointer-events: none;
+  }
+  .mobile-doctor-name {
+    font-weight: 700;
+    color: #1a2744;
+  }
+  .mobile-doctor-card .tag-list {
+    min-width: 0;
+  }
+
+  /* 操作按鈕固定在卡片底部滿版顯示，不需要左右滑動 */
+  .mobile-doctor-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-top: 12px;
+  }
+  .mobile-doctor-actions .btn-action {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    justify-content: center;
+    box-sizing: border-box;
+  }
+  .pagination-wrap {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .pagination-info {
+    text-align: center;
+    white-space: normal;
+  }
+  .pagination-controls {
+    justify-content: center;
+  }
+  .page-btn {
+    flex: 1 1 96px;
+  }
+}
+
 @media (max-width: 640px) {
   .modal-wide { width: 100%; border-radius: 14px 14px 0 0; align-self: flex-end; max-height: 96vh; }
-  .doctor-form-layout { grid-template-columns: 1fr; }
-  .col-basic { border-right: none; padding: 16px 0 0; }
+
+  /* 手機版表單改成單欄流動式排列，讓上下區塊左右對齊 */
+  .doctor-form-layout {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  /* 手機版隱藏欄位區塊標題，例如「基本資訊」、「詳細資料」 */
+  .col-label {
+    display: none;
+  }
+
+  /* 手機版清除桌機三欄版面留下的左右與上方間距 */
+  .form-col,
+  .form-col:last-child,
+  .col-basic,
+  .col-detail {
+    border-right: none;
+    padding: 0;
+  }
+
+  /* 手機版照片區保留底線與下方間距，和下面欄位自然分隔 */
+  .col-photo {
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+}
+
+@media (max-width: 420px) {
+  .mobile-doctor-row {
+    grid-template-columns: 70px minmax(0, 1fr);
+    gap: 10px;
+  }
+  .mobile-doctor-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .pagination-controls {
+    gap: 5px;
+  }
+  .page-number {
+    min-width: 32px;
+  }
 }
 </style>

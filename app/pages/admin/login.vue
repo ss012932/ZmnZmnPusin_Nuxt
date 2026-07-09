@@ -2,7 +2,7 @@
   <div class="login-page">
     <div class="login-card">
       <div class="login-logo">
-        <img src="/Mask group.png" alt="人人動物醫院" class="logo-img" />
+        <img src="@/assets/image/Maskgroup.webp" alt="人人動物醫院" class="logo-img" />
         <h1 class="login-title">後台管理系統</h1>
         <p class="login-subtitle">人人動物醫院埔心分院</p>
       </div>
