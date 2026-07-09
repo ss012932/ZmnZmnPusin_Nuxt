@@ -1,8 +1,10 @@
 <template>
   <div class="doctors-page">
-    <!-- ════ 總覽頁 ════ -->
-    <transition name="page-fade">
-      <div v-if="!selectedDoctor && !hasDoctorDetailQuery" class="overview-wrap">
+    <!-- ════ 總覽頁 / 詳情頁載入中 / 詳情頁：三種狀態共用同一個 transition，
+         並用 mode="out-in" 確保同一時間只有一個區塊存在於畫面上，
+         避免切換時新舊內容同時撐開高度，造成畫面先往下跳再彈回正確位置。 ════ -->
+    <transition name="page-fade" mode="out-in">
+      <div v-if="!selectedDoctor && !hasDoctorDetailQuery" key="overview" class="overview-wrap">
         <!-- 頁面主視覺：參考圖片上方的深色橫幅與麵包屑排版，色系改用網站的藍色系 -->
         <section class="team-hero" aria-labelledby="doctor-page-title">
           <div class="team-hero-overlay"></div>
@@ -110,12 +112,11 @@
           </div>
         </main>
       </div>
-    </transition>
 
-    <!-- ════ 詳情頁載入中 ════ -->
-    <transition name="page-fade">
+      <!-- ════ 詳情頁載入中 ════ -->
       <div
-        v-if="!selectedDoctor && hasDoctorDetailQuery"
+        v-else-if="!selectedDoctor && hasDoctorDetailQuery"
+        key="detail-loading"
         class="detail-section detail-loading-section"
       >
         <div
@@ -127,11 +128,9 @@
           <span class="loading-spinner" aria-hidden="true"></span>
         </div>
       </div>
-    </transition>
 
-    <!-- ════ 詳情頁 ════ -->
-    <transition name="page-fade">
-      <div v-if="selectedDoctor" class="detail-section">
+      <!-- ════ 詳情頁 ════ -->
+      <div v-else key="detail" class="detail-section">
         <button class="back-btn" @click="closeDoctor">← 返回醫師列表</button>
 
         <div class="detail-layout fade-in-item">
@@ -374,6 +373,13 @@ export default {
     if (import.meta.client && this.hasDoctorDetailQuery) {
       window.history.scrollRestoration = 'manual';
       window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+
+    // 詳情頁：不要先用快取資料閃一次舊內容再被最新資料蓋掉（會造成版面跳動），
+    // 直接等最新資料完整載入後才一次顯示，載入期間維持 loading 畫面。
+    if (this.hasDoctorDetailQuery) {
+      await this.fetchDoctors();
+      return;
     }
 
     // 先讀取快取資料，讓使用者再次進入醫師頁時可以立即看到卡片。
