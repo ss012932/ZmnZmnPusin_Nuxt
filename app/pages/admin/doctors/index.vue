@@ -271,7 +271,18 @@
                   <option value="">請選擇科別</option>
                   <option v-for="d in departments" :key="d.key" :value="d.key">{{ d.label }}</option>
                 </select>
+
+                <!-- 選擇「其他」時，讓管理員自行輸入實際科別名稱 -->
+                <input
+                  v-if="form.deptKey === 'other'"
+                  v-model="form.customDepartment"
+                  class="form-input"
+                  type="text"
+                  maxlength="50"
+                  placeholder="例如：皮膚科、行為醫學科"
+                />
                 <span class="form-error" v-if="formErrors.deptKey">{{ formErrors.deptKey }}</span>
+                <span class="form-error" v-if="formErrors.customDepartment">{{ formErrors.customDepartment }}</span>
               </div>
 
               <div class="form-group">
@@ -451,6 +462,7 @@ export default {
         { key: 'oncology',      label: '腫瘤科' },
         { key: 'laser',         label: '雷射治療' },
         { key: 'regenerative',  label: '再生醫療' },
+        { key: 'other',        label: '其他' },
       ],
 
       doctors: [],
@@ -590,7 +602,7 @@ export default {
     /* ── 表單 ── */
     emptyForm() {
       return {
-        name: '', photo: '', deptKey: '',
+        name: '', photo: '', deptKey: '', customDepartment: '',
         titleTagsRaw: '', specialtiesRaw: '', treatmentsRaw: '',
         educationRaw: '', workExperienceRaw: '', otherExperienceRaw: '',
         certificationsRaw: '',
@@ -602,6 +614,8 @@ export default {
     },
 
     deptLabel(key) {
+      // 選擇其他時，使用管理員輸入的實際科別名稱送往後端。
+      if (key === 'other') return this.form.customDepartment.trim();
       return this.departments.find((d) => d.key === key)?.label || key;
     },
 
@@ -621,6 +635,7 @@ export default {
         name: doc.name,
         photo: doc.photo,
         deptKey: doc.deptKey,
+        customDepartment: doc.deptKey === 'other' ? doc.department : '',
         titleTagsRaw:      (doc.titleTags      || []).join('\n'),
         specialtiesRaw:    (doc.specialties    || []).join('\n'),
         treatmentsRaw:     (doc.treatments     || []).join('\n'),
@@ -638,7 +653,10 @@ export default {
     validate() {
       this.formErrors = {};
       if (!this.form.name.trim())  this.formErrors.name    = '請輸入醫師姓名';
-      if (!this.form.deptKey)      this.formErrors.deptKey = '請選擇科別';
+      if (!this.form.deptKey) this.formErrors.deptKey = '請選擇科別';
+      if (this.form.deptKey === 'other' && !this.form.customDepartment.trim()) {
+        this.formErrors.customDepartment = '請輸入自訂科別名稱';
+      }
       return Object.keys(this.formErrors).length === 0;
     },
 
@@ -713,7 +731,8 @@ export default {
     /* ── API 回傳資料 → 前端 doctors 格式 ── */
     mapApiDoctor(d) {
       const splitLines = (str) => str ? str.split('\n').map((s) => s.trim()).filter(Boolean) : [];
-      const deptKey = this.departments.find((dep) => dep.label === d.department)?.key || '';
+      const matchedDepartment = this.departments.find((dep) => dep.key !== 'other' && dep.label === d.department);
+      const deptKey = matchedDepartment?.key || 'other';
       return {
         id:              d.id,
         name:            d.name,
