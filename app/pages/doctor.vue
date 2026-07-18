@@ -22,48 +22,6 @@
             <p>每一位醫師都承載著對醫療的熱忱與對病患的承諾。</p>
           </header>
 
-          <!-- 科別篩選區：桌機使用膠囊按鈕；中、小尺寸改為下拉選單，避免科別變多時頁面被撐高 -->
-          <section class="filter-shell fade-in-item fade-in-delay-1" aria-label="醫師科別篩選">
-            <div class="filter-card">
-              <!-- 桌機版：科別按鈕可全部攤開，視覺直覺、操作快速 -->
-              <div class="filter-bar filter-desktop" role="group" aria-label="選擇醫師科別">
-                <button
-                  v-for="dept in departments"
-                  :key="dept.key"
-                  type="button"
-                  class="filter-btn"
-                  :class="{ active: activeFilter === dept.key }"
-                  :aria-pressed="activeFilter === dept.key"
-                  @click="activeFilter = dept.key"
-                >
-                  {{ dept.label }}
-                </button>
-              </div>
-
-              <!-- 中小尺寸：改成原生 select，手機好點、鍵盤與無障礙支援也比較穩定 -->
-              <label class="filter-select-wrap" for="department-filter">
-                <span class="select-label">選擇科別</span>
-                <span class="filter-select-control">
-                  <select
-                    id="department-filter"
-                    v-model="activeFilter"
-                    class="filter-select"
-                    :aria-label="`目前篩選科別：${activeDepartmentLabel}`"
-                  >
-                    <option
-                      v-for="dept in departments"
-                      :key="dept.key"
-                      :value="dept.key"
-                    >
-                      {{ dept.label }}
-                    </option>
-                  </select>
-                  <span class="select-arrow" aria-hidden="true">⌄</span>
-                </span>
-              </label>
-            </div>
-          </section>
-
           <!-- 載入中提示：避免 API 還沒回來時畫面空白 -->
           <div
             v-if="isFetching"
@@ -147,11 +105,13 @@
             <!-- 醫師姓名與科別 -->
             <div class="sidebar-name-block">
               <h1 class="sidebar-name">{{ selectedDoctor.name }}</h1>
-              <p class="sidebar-dept">{{ selectedDoctor.department }}</p>
+              <p v-if="selectedDoctor.department" class="sidebar-dept">
+                {{ selectedDoctor.department }}
+              </p>
             </div>
 
             <!-- 醫師職稱 -->
-            <div class="sidebar-section">
+            <div v-if="selectedDoctor.titleTags.length" class="sidebar-section">
               <h4 class="sidebar-section-title">職稱</h4>
               <div class="title-tags">
                 <span
@@ -168,7 +128,7 @@
           <!-- 右側：詳細資料 -->
           <main class="detail-main">
             <!-- 專業領域 -->
-            <section class="detail-block">
+            <section v-if="selectedDoctor.specialties.length" class="detail-block">
               <h3 class="block-title">專業領域</h3>
               <div class="specialties-tags">
                 <span
@@ -182,7 +142,7 @@
             </section>
 
             <!-- 擅長診療項目 -->
-            <section class="detail-block">
+            <section v-if="selectedDoctor.treatments.length" class="detail-block">
               <h3 class="block-title">擅長診療項目</h3>
               <div class="treatments-wrap">
                 <div
@@ -197,17 +157,24 @@
             </section>
 
             <!-- 就學／就職經歷 -->
-            <section class="detail-block">
+            <section
+              v-if="
+                selectedDoctor.education.length ||
+                selectedDoctor.workExperience.length ||
+                selectedDoctor.otherExperience.length
+              "
+              class="detail-block"
+            >
               <h3 class="block-title">就學／就職經歷</h3>
 
-              <div class="exp-group">
+              <div v-if="selectedDoctor.education.length" class="exp-group">
                 <h4 class="exp-group-title">學歷</h4>
                 <ul class="exp-list">
                   <li v-for="(item, idx) in selectedDoctor.education" :key="idx">{{ item }}</li>
                 </ul>
               </div>
 
-              <div class="exp-group">
+              <div v-if="selectedDoctor.workExperience.length" class="exp-group">
                 <h4 class="exp-group-title">就職經歷</h4>
                 <ul class="exp-list">
                   <li v-for="(item, idx) in selectedDoctor.workExperience" :key="idx">{{ item }}</li>
@@ -226,7 +193,7 @@
             </section>
 
             <!-- 證照與資格 -->
-            <section class="detail-block">
+            <section v-if="selectedDoctor.certifications.length" class="detail-block">
               <h3 class="block-title">證照與資格</h3>
               <ul class="exp-list">
                 <li v-for="(cert, idx) in selectedDoctor.certifications" :key="idx">{{ cert }}</li>
@@ -606,7 +573,7 @@ export default {
   overflow: hidden;
   background:
     
-    url('@/assets/image/doctorhero.webp') center / cover no-repeat;
+    url('@/assets/image/doctor.webp') center / cover no-repeat;
 }
 
 /* Hero 光暈：做出圖片右側偏亮的層次，但仍保持網站藍色調 */
@@ -624,7 +591,13 @@ export default {
 .team-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(6, 28, 49, 0.08), rgba(6, 28, 49, 0.26));
+  background: linear-gradient(
+    90deg,
+    rgba(8, 31, 49, 0.88) 0%,
+    rgba(8, 31, 49, 0.72) 42%,
+    rgba(8, 31, 49, 0.2) 72%,
+    rgba(8, 31, 49, 0.08) 100%
+  );
 }
 
 .team-hero-content {
