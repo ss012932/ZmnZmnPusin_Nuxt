@@ -1,5 +1,9 @@
 <template>
-  <header class="navbar" :style="{ backgroundColor: displayBgWhite ? '#ffffff' : '#fffaf0' }">
+  <header
+    class="navbar"
+    :class="{ 'menu-open': isOpen }"
+    :style="{ backgroundColor: displayBgWhite ? '#ffffff' : '#fffaf0' }"
+  >
     <div class="navbar-logo">
       <div class="logo-circle">
         <img src="@/assets/image/Maskgroup.webp" alt="Logo" />
@@ -464,7 +468,8 @@ a {
 .navbar {
   position: sticky;
   top: 0;
-  z-index: 1000;
+  /* Header 必須高於首頁飼主反饋區塊（z-index: 9999），才不會在滑動時被蓋住。 */
+  z-index: 11000;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -563,6 +568,11 @@ a {
 }
 
 @media (max-width: 1023px) {
+  /* 行動版選單開啟時，提高整個 Header stacking context，避免被頁面高 z-index 區塊蓋住。 */
+  .navbar.menu-open {
+    z-index: 11500;
+  }
+
   .navbar-menu {
     position: fixed;
     z-index: 1110;
