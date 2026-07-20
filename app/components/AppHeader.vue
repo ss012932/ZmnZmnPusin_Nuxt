@@ -1,5 +1,9 @@
 <template>
-  <header class="navbar" :style="{ backgroundColor: displayBgWhite ? '#ffffff' : '#fffaf0' }">
+  <header
+    class="navbar"
+    :class="{ 'menu-open': isOpen }"
+    :style="{ backgroundColor: displayBgWhite ? '#ffffff' : '#fffaf0' }"
+  >
     <div class="navbar-logo">
       <div class="logo-circle">
         <img src="@/assets/image/Maskgroup.webp" alt="Logo" />
@@ -563,6 +567,11 @@ a {
 }
 
 @media (max-width: 1023px) {
+  /* 行動版選單開啟時，提高整個 Header stacking context，避免被頁面高 z-index 區塊蓋住。 */
+  .navbar.menu-open {
+    z-index: 13000;
+  }
+
   .navbar-menu {
     position: fixed;
     z-index: 1110;

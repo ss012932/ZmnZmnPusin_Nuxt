@@ -48,7 +48,11 @@
           <section class="pet-section cat-section fade-in-item">
             <header class="section-header">
               <div class="section-title-group">
-                <span class="pet-icon">🐱</span>
+                <img
+                  class="pet-icon"
+                  src="@/assets/image/healthcheck-cat.webp"
+                  alt="貓貓健康檢查套組圖示"
+                />
                 <div>
                   <h2 class="section-title">貓貓健康檢查套組</h2>
                 </div>
@@ -286,7 +290,11 @@
           <section class="pet-section dog-section fade-in-item fade-in-delay-1">
             <header class="section-header">
               <div class="section-title-group">
-                <span class="pet-icon">🐶</span>
+                <img
+                  class="pet-icon"
+                  src="@/assets/image/healthcheck-dog.webp"
+                  alt="狗狗健康檢查套組圖示"
+                />
                 <div>
                   <h2 class="section-title">狗狗健康檢查套組</h2>
                 </div>
@@ -773,13 +781,15 @@
   gap: 12px;
 }
 .pet-icon {
-  display: grid;
+  display: block;
   width: 50px;
   height: 50px;
-  place-items: center;
-  border-radius: 16px;
-  background: #eef4f8;
-  font-size: 25px;
+  object-fit: contain;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: none;
 }
 .section-kicker {
   display: block;
@@ -1151,7 +1161,6 @@
   .pet-icon {
     width: 46px;
     height: 46px;
-    font-size: 23px;
   }
   .section-kicker {
     font-size: 10px;
