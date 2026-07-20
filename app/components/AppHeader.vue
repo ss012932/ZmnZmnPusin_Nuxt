@@ -468,8 +468,7 @@ a {
 .navbar {
   position: sticky;
   top: 0;
-  /* Header 必須高於首頁飼主反饋區塊（z-index: 9999），才不會在滑動時被蓋住。 */
-  z-index: 11000;
+  z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -570,7 +569,7 @@ a {
 @media (max-width: 1023px) {
   /* 行動版選單開啟時，提高整個 Header stacking context，避免被頁面高 z-index 區塊蓋住。 */
   .navbar.menu-open {
-    z-index: 11500;
+    z-index: 13000;
   }
 
   .navbar-menu {
