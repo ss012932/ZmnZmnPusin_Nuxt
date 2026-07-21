@@ -216,7 +216,7 @@
     </div>
 
     <!-- ══ 新增/編輯 Modal（橫向三區塊） ══ -->
-    <div class="modal-backdrop" v-if="showModal" @click.self="closeModal">
+    <div class="modal-backdrop" v-if="showModal">
       <div class="modal modal-wide">
 
         <div class="modal-header">
@@ -287,7 +287,7 @@
 
               <div class="form-group">
                 <label class="form-label">職稱（每行一個）</label>
-                <textarea class="form-textarea" v-model="form.titleTagsRaw" rows="4"
+                <textarea class="form-textarea" wrap="off" v-model="form.titleTagsRaw" rows="4"
                   placeholder="院長&#10;門診醫療部主任"></textarea>
               </div>
             </div>
@@ -300,37 +300,37 @@
 
                 <div class="form-group">
                   <label class="form-label">專業領域（每行一個）</label>
-                  <textarea class="form-textarea" v-model="form.specialtiesRaw" rows="5"
+                  <textarea class="form-textarea" wrap="off" v-model="form.specialtiesRaw" rows="5"
                     placeholder="犬貓心臟病&#10;腎臟疾病&#10;內分泌疾病"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">擅長診療項目（每行一個）</label>
-                  <textarea class="form-textarea" v-model="form.treatmentsRaw" rows="5"
+                  <textarea class="form-textarea" wrap="off" v-model="form.treatmentsRaw" rows="5"
                     placeholder="心臟超音波與心電圖檢查&#10;腹腔鏡微創手術&#10;腫瘤切除與化療評估"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">學歷（每行一個）</label>
-                  <textarea class="form-textarea" v-model="form.educationRaw" rows="4"
+                  <textarea class="form-textarea" wrap="off" v-model="form.educationRaw" rows="4"
                     placeholder="國立中興大學 獸醫學院 獸醫學系&#10;國立台灣大學 獸醫專業學院 獸醫系"></textarea>
                 </div>
 
                 <div class="form-group">
                   <label class="form-label">證照與資格（每行一個）</label>
-                  <textarea class="form-textarea" v-model="form.certificationsRaw" rows="4"
+                  <textarea class="form-textarea" wrap="off" v-model="form.certificationsRaw" rows="4"
                     placeholder="中華民國獸醫師執照&#10;小動物內科專科認證&#10;ISVS 外科認證"></textarea>
                 </div>
 
                 <div class="form-group dg-full">
                   <label class="form-label">就職經歷（每行一個）</label>
-                  <textarea class="form-textarea" v-model="form.workExperienceRaw" rows="4"
+                  <textarea class="form-textarea" wrap="off" v-model="form.workExperienceRaw" rows="4"
                     placeholder="台北動物醫院 住院獸醫師&#10;本院內科 主治獸醫師"></textarea>
                 </div>
 
                 <div class="form-group dg-full">
                   <label class="form-label">其他經歷（每行一個）</label>
-                  <textarea class="form-textarea" v-model="form.otherExperienceRaw" rows="3"
+                  <textarea class="form-textarea" wrap="off" v-model="form.otherExperienceRaw" rows="3"
                     placeholder="台灣小動物獸醫師學會 會員&#10;亞洲獸醫心臟病學會 研究員"></textarea>
                 </div>
 
@@ -1321,7 +1321,24 @@ export default {
 .required    { color: #e53e3e; }
 .form-input  { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; transition: border-color .2s; background: #fff; }
 .form-input:focus { border-color: #2c5282; }
-.form-textarea { padding: 9px 12px; border: 1.5px solid #ddd; border-radius: 8px; font-size: 14px; font-family: inherit; outline: none; resize: none; transition: border-color .2s; min-height: 80px; }
+.form-textarea {
+  padding: 9px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  resize: none;
+  transition: border-color .2s;
+  min-height: 80px;
+
+  /* 只有管理員按下 Enter 才換行；內容過長時改為水平捲動 */
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+  overflow-x: auto;
+}
+
 .form-textarea:focus { border-color: #2c5282; }
 .form-error  { font-size: 12px; color: #e53e3e; }
 

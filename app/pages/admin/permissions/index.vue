@@ -193,7 +193,7 @@
     </div>
 
     <!-- ══ 新增/編輯 Modal ══ -->
-    <div class="modal-backdrop" v-if="showModal" @click.self="closeModal">
+    <div class="modal-backdrop" v-if="showModal">
       <div class="modal modal-md">
         <div class="modal-header">
           <h3 class="modal-title">
