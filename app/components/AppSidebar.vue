@@ -15,28 +15,28 @@
       <ul class="nav-list">
 
         <li class="nav-item">
-          <NuxtLink to="/admin/doctors" class="nav-link" active-class="active">
+          <NuxtLink to="/admin/doctors" class="nav-link" active-class="active" @click="handleNavigationClick">
             <iconify-icon icon="healthicons:doctor" width="20" class="nav-icon"></iconify-icon>
             <span class="nav-label" v-show="!collapsed">醫師管理</span>
           </NuxtLink>
         </li>
 
         <li class="nav-item">
-          <NuxtLink to="/admin/articles" class="nav-link" active-class="active">
+          <NuxtLink to="/admin/articles" class="nav-link" active-class="active" @click="handleNavigationClick">
             <iconify-icon icon="mdi:file-document-outline" width="20" class="nav-icon"></iconify-icon>
             <span class="nav-label" v-show="!collapsed">文章管理</span>
           </NuxtLink>
         </li>
 
         <li class="nav-item">
-          <NuxtLink to="/admin/categories" class="nav-link" active-class="active">
+          <NuxtLink to="/admin/categories" class="nav-link" active-class="active" @click="handleNavigationClick">
             <iconify-icon icon="mdi:tag-multiple-outline" width="20" class="nav-icon"></iconify-icon>
             <span class="nav-label" v-show="!collapsed">類別管理</span>
           </NuxtLink>
         </li>
 
         <li class="nav-item" v-if="user?.isAdmin">
-          <NuxtLink to="/admin/permissions" class="nav-link" active-class="active">
+          <NuxtLink to="/admin/permissions" class="nav-link" active-class="active" @click="handleNavigationClick">
             <iconify-icon icon="mdi:shield-account-outline" width="20" class="nav-icon"></iconify-icon>
             <span class="nav-label" v-show="!collapsed">權限管理</span>
           </NuxtLink>
@@ -83,6 +83,15 @@ export default {
   },
 
   emits: ['toggle', 'close'],
+
+  methods: {
+    // 手機版點選導覽連結後，通知父層收合側邊欄。
+    handleNavigationClick() {
+      if (this.mobileOpen) {
+        this.$emit('close');
+      }
+    },
+  },
 };
 </script>
 

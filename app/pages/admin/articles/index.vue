@@ -406,24 +406,24 @@
           <h2 class="page-title">{{ form.title || '（無標題）' }}</h2>
           <p class="page-desc">第 2 步：編輯各段落內容</p>
         </div>
-        <div class="header-actions">
-          <button class="btn btn-ghost" @click="view = 'step1'">
+        <div class="header-actions step2-header-actions">
+          <button class="btn btn-ghost step2-action-back" @click="view = 'step1'">
             <iconify-icon icon="mdi:arrow-left" width="16"></iconify-icon>
             上一步
           </button>
-          <button class="btn btn-ghost" @click="tryGoToList">
+          <button class="btn btn-ghost step2-action-cancel" @click="tryGoToList">
             <iconify-icon icon="mdi:close" width="16"></iconify-icon>
             取消
           </button>
-          <button class="btn btn-outline" @click="openPreviewAll">
+          <button class="btn btn-outline step2-action-preview" @click="openPreviewAll">
             <iconify-icon icon="mdi:eye-outline" width="16"></iconify-icon>
             預覽
           </button>
-          <button class="btn btn-outline" :disabled="saving" @click="handleSave('draft')">
+          <button class="btn btn-outline step2-action-draft" :disabled="saving" @click="handleSave('draft')">
             <iconify-icon icon="mdi:content-save-outline" width="16"></iconify-icon>
             {{ saving ? '儲存中...' : '儲存草稿' }}
           </button>
-          <button class="btn btn-primary" :disabled="saving" @click="handleSave('published')">
+          <button class="btn btn-primary step2-action-publish" :disabled="saving" @click="handleSave('published')">
             <iconify-icon icon="mdi:publish" width="16"></iconify-icon>
             {{ saving ? '發布中...' : '發布文章' }}
           </button>
@@ -1405,6 +1405,14 @@ export default {
     grid-template-columns: 1fr;
     gap: 8px;
   }
+
+  /* 內容編輯頁按鈕：前兩排各兩顆，發布按鈕維持最下方整排。 */
+  .step2-header-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .step2-action-publish {
+    grid-column: 1 / -1;
+  }
   .header-actions.list-header-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1617,7 +1625,14 @@ export default {
     gap: 10px;
   }
   .mobile-article-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+  .mobile-article-actions .btn-action,
+  .mobile-article-actions .btn-preview {
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 11px;
   }
   .pagination-controls {
     gap: 5px;
