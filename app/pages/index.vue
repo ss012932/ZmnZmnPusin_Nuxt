@@ -3,9 +3,15 @@
     <!-- Hero 區塊 -->
 <section class="hero">
   <div class="hero-container fade-in-item">
-    <!-- 左側圖片區 -->
+    <!-- 左側圖片區：背景圓形由 CSS 製作，去背貓咪疊在最前方，使前掌伸出框外 -->
     <div class="hero-image">
-      <img src="@/assets/image/Group-75.webp" alt="Dog and Cat" />
+      <img
+        src="@/assets/image/hero-1.webp"
+        alt="虎斑貓伸出前掌，迎接每一位來到動物醫院的毛孩子"
+        width="1774"
+        height="887"
+        fetchpriority="high"
+      />
     </div>
 
     <!-- 右側文字區 -->
@@ -527,18 +533,29 @@ img {
 }
  
 .hero-image {
+  /* 視覺舞台不裁切圖片：貓咪的前掌可以跨出裝飾圓形 */
+  position: relative;
+  isolation: isolate;
   display: grid;
+  place-items: center;
   width: 100%;
   min-width: 0;
-  place-items: center;
+  min-height: clamp(280px, 32vw, 440px);
 }
 
+/* 主圓形：比貓咪略小、置於身體後方，保留右下方前掌突出效果 */
 .hero-image img {
+  /* 去背圖片獨立疊在圓形上方，尾端前掌可以自然跨出圓框 */
+  position: relative;
+  z-index: 1;
   display: block;
-  width: min(100%, 520px);
+  width: 112%;
+  max-width: none;
   height: auto;
+  transform: translate(4%, 5%);
+  filter: drop-shadow(0 13px 15px rgba(28, 55, 72, 0.12));
 }
- 
+
 .hero-text {
   min-width: 0;
   color: #123d63;
@@ -570,8 +587,13 @@ img {
     padding: 32px 16px 44px;
   }
 
+  .hero-image {
+    min-height: 230px;
+  }
+
   .hero-image img {
-    width: min(92%, 340px);
+    width: 108%;
+    transform: translate(2%, 4%);
   }
 
   .hero-text h1 {
@@ -598,8 +620,8 @@ img {
 }
 
 @media (min-width: 1200px) {
-  .hero-image img {
-    width: min(100%, 580px);
+  .hero-image {
+    min-height: 460px;
   }
 }
  
